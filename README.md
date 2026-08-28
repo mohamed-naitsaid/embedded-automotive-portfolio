@@ -26,7 +26,7 @@ Build strong practical skills in:
 
 ## 🧠 Learning Roadmap
 
-### Month 1 — Embedded Foundations
+### Embedded Foundations
 
 * C programming
 * Embedded C
@@ -46,7 +46,7 @@ Build strong practical skills in:
 * PWM
 * DMA
 
-### Month 2 — Advanced Embedded Systems
+### Advanced Embedded Systems
 
 * Driver development
 * Hardware abstraction
@@ -63,7 +63,7 @@ Build strong practical skills in:
 * Communication protocols
 * CAN
 
-### Month 3 — Automotive Embedded Systems
+### Automotive Embedded Systems
 
 * CAN communication
 * ECU architecture
