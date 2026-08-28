@@ -2,7 +2,7 @@
 
 Welcome to my Embedded Software Engineering portfolio.
 
-This repository documents my time learning journey focused on **Embedded Systems and Automotive Software Engineering**, from low-level C programming to automotive communication and ECU architecture.
+This repository documents my learning journey focused on **Embedded Systems and Automotive Software Engineering**, from low-level C programming to automotive communication and ECU architecture.
 
 ## 🎯 Objective
 
