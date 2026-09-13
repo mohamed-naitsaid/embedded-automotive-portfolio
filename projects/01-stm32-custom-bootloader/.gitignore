@@ -1,0 +1,15 @@
+# STM32CubeIDE build folders
+Debug/
+Release/
+
+# Temporary files
+.metadata/
+
+# Generated compilation files
+*.elf
+*.map
+*.list
+*.bin
+
+# Windows
+Thumbs.db
