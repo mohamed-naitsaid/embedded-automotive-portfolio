@@ -29,6 +29,27 @@ The objective of this project is to understand and implement the complete boot p
 - Vector table relocation
 - MSP configuration
 - Jump to application
+## V1 Architecture
+
+The STM32 Flash memory is divided into two regions:
+
+```text
+0x08000000
++---------------------------+
+| Bootloader                |
+| 16 KB                     |
+|                           |
+| Jump_To_Application()     |
++---------------------------+
+0x08004000
+| Application               |
+| 48 KB                     |
+|                           |
+| Vector Table              |
+| Reset_Handler             |
+| main()                    |
++---------------------------+
+0x08010000
 
 ### V2 — Firmware Validation
 
