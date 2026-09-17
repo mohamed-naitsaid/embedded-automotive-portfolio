@@ -32,7 +32,11 @@ typedef void (*pFunction)(void);
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define APP_START_ADDRESS  0x08004000U
+#define APP_START_ADDRESS   0x08004000U
+#define APP_END_ADDRESS     0x08010000U
+
+#define SRAM_START_ADDRESS  0x20000000U
+#define SRAM_END_ADDRESS    0x20005000U
 
 
 /* USER CODE END PD */
@@ -51,33 +55,85 @@ typedef void (*pFunction)(void);
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
+/* USER CODE BEGIN PFP */
+
 void SystemClock_Config(void);
+uint8_t Bootloader_IsApplicationValid(void);
+void Jump_To_Application(void);
 
 /* USER CODE END PFP */
-void Jump_To_Application(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+/* USER CODE BEGIN 0 */
+
+uint8_t Bootloader_IsApplicationValid(void)
+{
+    uint32_t appStack;
+    uint32_t appResetHandler;
+    uint32_t appResetAddress;
+
+    /* Read initial MSP */
+    appStack =
+        *(volatile uint32_t *)APP_START_ADDRESS;
+
+    /* Read application Reset_Handler */
+    appResetHandler =
+        *(volatile uint32_t *)(APP_START_ADDRESS + 4U);
+
+    /* Check if application Flash area is empty */
+    if ((appStack == 0xFFFFFFFFU) ||
+        (appResetHandler == 0xFFFFFFFFU))
+    {
+        return 0U;
+    }
+
+    /* Check MSP inside SRAM */
+    if ((appStack < SRAM_START_ADDRESS) ||
+        (appStack > SRAM_END_ADDRESS))
+    {
+        return 0U;
+    }
+
+    /* Cortex-M handler must have Thumb bit set */
+    if ((appResetHandler & 0x1U) == 0U)
+    {
+        return 0U;
+    }
+
+    /* Remove Thumb bit for address validation */
+    appResetAddress = appResetHandler & ~0x1U;
+
+    /* Reset_Handler must belong to Application Flash */
+    if ((appResetAddress < APP_START_ADDRESS) ||
+        (appResetAddress >= APP_END_ADDRESS))
+    {
+        return 0U;
+    }
+
+    return 1U;
+}
+
+
 void Jump_To_Application(void)
 {
     uint32_t appStack;
     uint32_t appResetHandler;
     pFunction appEntry;
 
-    /* Read first entry of application vector table */
+    /* Read application vector table */
     appStack =
         *(volatile uint32_t *)APP_START_ADDRESS;
 
-    /* Read second entry: Reset_Handler */
     appResetHandler =
         *(volatile uint32_t *)(APP_START_ADDRESS + 4U);
 
-    /* Check that initial MSP points inside SRAM */
-    if ((appStack >= 0x20000000U) &&
-        (appStack <= 0x20005000U))
+    /* Check MSP */
+    if ((appStack >= SRAM_START_ADDRESS) &&
+        (appStack <= SRAM_END_ADDRESS))
     {
         appEntry = (pFunction)appResetHandler;
 
-        /* Stop bootloader interrupts */
+        /* Disable bootloader interrupts */
         __disable_irq();
 
         /* Stop SysTick */
@@ -85,20 +141,19 @@ void Jump_To_Application(void)
         SysTick->LOAD = 0U;
         SysTick->VAL  = 0U;
 
-        /* Use application's vector table */
+        /* Relocate vector table */
         SCB->VTOR = APP_START_ADDRESS;
 
-        /* Load application's Main Stack Pointer */
+        /* Load application MSP */
         __set_MSP(appStack);
 
-        /* Jump to application's Reset_Handler */
+        /* Jump to application Reset_Handler */
         appEntry();
     }
 }
 
-
 /* USER CODE END 0 */
-
+/* USER CODE END 0 */
 /**
   * @brief  The application entry point.
   * @retval int
@@ -123,7 +178,11 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-  Jump_To_Application();
+  if (Bootloader_IsApplicationValid() == 1U)
+  {
+      Jump_To_Application();
+  }
+
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
