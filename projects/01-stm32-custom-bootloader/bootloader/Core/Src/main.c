@@ -55,15 +55,11 @@ typedef void (*pFunction)(void);
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
-/* USER CODE BEGIN PFP */
-
 void SystemClock_Config(void);
 uint8_t Bootloader_IsApplicationValid(void);
 void Jump_To_Application(void);
-
 /* USER CODE END PFP */
 /* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
 /* USER CODE BEGIN 0 */
 
 uint8_t Bootloader_IsApplicationValid(void)
@@ -152,7 +148,6 @@ void Jump_To_Application(void)
     }
 }
 
-/* USER CODE END 0 */
 /* USER CODE END 0 */
 /**
   * @brief  The application entry point.
