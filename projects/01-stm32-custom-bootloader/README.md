@@ -47,12 +47,38 @@ Validation checks:
 
 A PC13 LED blinking test confirms successful execution of a valid application.
 
-### V3 — Firmware Integrity
+### ✅ V3 — Firmware Integrity — Completed
 
-- Firmware metadata
-- Magic number
-- Firmware size
-- CRC verification
+V3 introduces firmware metadata and CRC32 integrity verification before the application is executed.
+
+#### Memory Layout
+
+```text
+0x08000000
++-----------------------------+
+| Bootloader - 16 KB          |
++-----------------------------+
+
+0x08004000
++-----------------------------+
+| Firmware Header - 1 KB      |
+|                             |
+| Magic Number                |
+| Firmware Size               |
+| CRC32                       |
+| Firmware Version            |
++-----------------------------+
+
+0x08004400
++-----------------------------+
+| Application - 47 KB         |
+|                             |
+| Vector Table                |
+| Reset_Handler               |
+| Application Code            |
++-----------------------------+
+
+0x08010000
 
 ### V4 — UART Firmware Update
 

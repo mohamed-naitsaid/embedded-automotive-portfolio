@@ -21,3 +21,6 @@ Test_Invalid_*.hex
 # Proteus temporary files
 proteus/Project Backups/
 *.pdsprj.DESKTOP-*.workspace
+# V3 validation test artifacts
+Test_*_V3.hex
+Test_Corrupted_Firmware_V3.hex
