@@ -63,7 +63,7 @@ typedef struct
 #define BL_BYTE_RECEIVED      'K'
 #define BL_BUFFER_RECEIVED    'B'
 
-#define UART_RX_TIMEOUT       10000U
+#define UART_RX_TIMEOUT       3000U
 #define UART_TX_TIMEOUT       100U
 
 #define FLASH_PAGE_SIZE       0x400U
