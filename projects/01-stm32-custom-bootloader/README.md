@@ -1,10 +1,10 @@
 # STM32F103 Custom Bootloader
 
-Custom bootloader implementation for the **STM32F103C8T6 (ARM Cortex-M3)**.
+Custom bootloader developed for the **STM32F103C8T6 (ARM Cortex-M3)**.
 
-The objective of this project is to understand and implement the complete embedded boot process step by step, from a basic bootloader-to-application jump to firmware validation, integrity checking, communication-based firmware updates, and automotive diagnostic bootloader concepts.
+The goal of this project is to understand and implement the embedded boot process step by step, starting from a simple Bootloader-to-Application jump and progressively adding firmware validation, integrity checking and firmware update mechanisms.
 
-The project is developed incrementally through multiple versions.
+The project is developed incrementally, with each version adding a new bootloader capability.
 
 ---
 
@@ -12,32 +12,29 @@ The project is developed incrementally through multiple versions.
 
 - Understand the STM32 boot sequence
 - Understand Flash and SRAM memory organization
-- Configure separate Bootloader and Application memory regions
-- Understand the Cortex-M Vector Table
+- Separate Bootloader and Application memory regions
+- Work with the Cortex-M Vector Table
 - Understand MSP and Reset Handler behavior
 - Relocate the Application Vector Table
 - Validate an Application before execution
 - Add firmware metadata
 - Verify firmware integrity using CRC32
-- Implement firmware update over UART
-- Extend firmware update over CAN
-- Explore automotive diagnostic bootloader concepts using UDS
+- Receive and program firmware through UART
+- Extend the architecture later toward CAN and UDS
 
 ---
 
 # Development Status
 
-## ✅ V1 — Bootloader to Application Jump — Completed
+## ✅ V1 — Bootloader to Application Jump
 
 The first version implements the basic transfer of execution from the Bootloader to a separate Application.
 
 ### Features
 
-- Flash memory partition
-- Separate Bootloader and Application projects
 - Bootloader located at `0x08000000`
 - Application located at `0x08004000`
-- Separate linker configurations
+- Separate Bootloader and Application linker configurations
 - Application Vector Table relocation
 - Initial MSP loading
 - Application Reset Handler loading
@@ -115,11 +112,11 @@ PC13 LED blinking
 
 ---
 
-## ✅ V2 — Firmware Validation — Completed
+## ✅ V2 — Firmware Validation
 
 V2 adds validation of the Application before transferring execution.
 
-The Bootloader verifies that the Application Vector Table contains coherent values before performing the jump.
+The Bootloader checks the Application Vector Table and verifies that its main startup values are coherent.
 
 ### Validation Checks
 
@@ -183,15 +180,17 @@ Jump to Application
 | Reset Handler outside Application region | Stay in Bootloader | PASS |
 | Invalid Thumb bit | Stay in Bootloader | PASS |
 
-A PC13 LED blinking test confirms successful execution of a valid Application.
+Successful Application execution is confirmed by the PC13 LED blinking.
 
 ---
 
-## ✅ V3 — Firmware Integrity — Completed
+## ✅ V3 — Firmware Header and CRC32 Integrity
 
-V3 introduces a dedicated **Firmware Header** and **CRC32 integrity verification**.
+V3 introduces a dedicated **Firmware Header** and a **CRC32 integrity check**.
 
-The Application is moved from `0x08004000` to `0x08004400`, while the region starting at `0x08004000` is reserved for firmware metadata.
+The Application is moved from `0x08004000` to `0x08004400`.
+
+The region starting at `0x08004000` is reserved for firmware metadata.
 
 ### V3 Memory Layout
 
@@ -224,7 +223,7 @@ The Application is moved from `0x08004000` to `0x08004400`, while the region sta
 |                             |
 | Vector Table                |
 | Reset_Handler               |
-| Application Code            |
+| Application code            |
 |                             |
 | 0x08004400 - 0x0800FFFF     |
 +-----------------------------+
@@ -234,7 +233,7 @@ The Application is moved from `0x08004000` to `0x08004400`, while the region sta
 
 ### Firmware Header
 
-The firmware header starts at:
+The header starts at:
 
 ```text
 0x08004000
@@ -256,11 +255,13 @@ Magic Number : 0xB00710AD
 Version      : 0x00010000
 ```
 
-The current structure uses only 16 bytes, while a 1 KB region is reserved for future firmware metadata.
+The header currently uses 16 bytes.
 
-### Application Start Address
+A 1 KB region is reserved so more metadata can be added later if needed.
 
-The Application Vector Table is now located at:
+### Application Vector Table
+
+The Application now starts at:
 
 ```text
 0x08004400
@@ -273,9 +274,9 @@ Therefore:
 0x08004404 -> Reset_Handler
 ```
 
-### Firmware Header Validation
+### Header Validation
 
-Before checking the Application, the Bootloader verifies:
+Before executing the Application, the Bootloader checks:
 
 ```text
 Magic Number valid?
@@ -284,21 +285,21 @@ Magic Number valid?
 Firmware Size != 0?
         |
         v
-Firmware Size <= Application Flash region?
+Firmware Size inside Application region?
         |
         v
 Continue validation
 ```
 
-An invalid header prevents the Application from starting.
+An invalid Firmware Header prevents the Application from starting.
 
 ---
 
 ## CRC32 Integrity Verification
 
-The V3 Bootloader performs a CRC32 check before transferring execution.
+The Bootloader calculates CRC32 over the Application stored in Flash.
 
-CRC configuration:
+Configuration:
 
 ```text
 Initial Value : 0xFFFFFFFF
@@ -306,55 +307,52 @@ Polynomial    : 0xEDB88320
 Final XOR     : 0xFFFFFFFF
 ```
 
-The implementation is compatible with Python:
+The implementation is compatible with:
 
 ```python
 zlib.crc32()
 ```
 
-### Firmware Image Generation
+### V3 Firmware Image Generation
 
-The Python script:
+The script:
 
 ```text
 generate_v3_image.py
 ```
 
-automatically:
+builds the V3 combined firmware image by:
 
-1. Loads the Bootloader HEX
-2. Loads the Application HEX
-3. Verifies the Application start address
-4. Determines the real firmware size
-5. Builds the exact Application byte sequence
-6. Calculates CRC32
-7. Creates the Firmware Header
-8. Inserts the Header at `0x08004000`
-9. Inserts the Application at `0x08004400`
-10. Generates the final combined firmware image
+1. Loading the Bootloader HEX
+2. Loading the Application HEX
+3. Checking the Application start address
+4. Determining the real Application size
+5. Extracting the Application bytes
+6. Calculating CRC32
+7. Building the Firmware Header
+8. Writing the Header at `0x08004000`
+9. Writing the Application at `0x08004400`
+10. Generating the final Intel HEX image
 
-Final output:
+Output:
 
 ```text
 Bootloader_Application_V3.hex
 ```
 
-### Example Generated Header
-
-Example from the current build:
+Example from the current Application build:
 
 ```text
 Magic Number    : 0xB00710AD
 Firmware Size   : 4608 bytes
 CRC32           : 0xB226C8B2
 Version         : 0x00010000
-
 Header Address  : 0x08004000
 Application     : 0x08004400
 Application End : 0x080055FF
 ```
 
-The exact CRC32 value may change whenever the Application binary changes.
+The CRC32 changes when the Application binary changes.
 
 ### CRC Validation Flow
 
@@ -369,7 +367,7 @@ Firmware Header
 Application @ 0x08004400
       |
       v
-Bootloader calculates CRC32
+Calculate CRC32
       |
       v
 Calculated CRC == Stored CRC?
@@ -383,51 +381,6 @@ Stay in Bootloader   Continue Boot
                   Jump to Application
 ```
 
-### Complete V3 Boot Flow
-
-```text
-Power ON / Reset
-       |
-       v
-Bootloader
-       |
-       v
-Validate Firmware Header
-       |
-       +--> Magic Number
-       +--> Firmware Size
-       |
-       v
-Validate Application Vector Table
-       |
-       +--> MSP
-       +--> Reset Handler
-       +--> Thumb bit
-       +--> Flash address
-       |
-       v
-Calculate Application CRC32
-       |
-       v
-Compare with Header CRC32
-       |
-       +---------- INVALID ----------> Stay in Bootloader
-       |
-      VALID
-       |
-       v
-Jump_To_Application()
-       |
-       v
-Application Reset_Handler
-       |
-       v
-Application main()
-       |
-       v
-PC13 LED blinking
-```
-
 ### V3 Validation Tests
 
 | Test | Expected Behavior | Result |
@@ -438,9 +391,421 @@ PC13 LED blinking
 | Valid CRC32 | Jump to Application | PASS |
 | Corrupted Application byte | CRC mismatch / Stay in Bootloader | PASS |
 
-A firmware corruption test was performed by modifying a single Application byte without updating the stored CRC32.
+A corruption test was performed by modifying one Application byte without updating the CRC stored in the Header.
 
-The Bootloader detected the CRC mismatch and refused to execute the Application.
+The Bootloader detected the mismatch and refused to execute the corrupted Application.
+
+---
+
+# ✅ V4 — UART Firmware Update
+
+V4 adds a complete firmware update mechanism over **USART1**.
+
+Instead of loading a combined Bootloader/Application image directly into Flash, the STM32 can now receive the Application from a PC while the Bootloader is running.
+
+The PC side is handled by:
+
+```text
+firmware_update.py
+```
+
+The update process was validated in Proteus using a serial connection between Python and the simulated STM32.
+
+### UART Configuration
+
+```text
+USART       : USART1
+Baud rate   : 115200
+Data bits   : 8
+Parity      : None
+Stop bits   : 1
+Flow control: None
+```
+
+STM32 pins:
+
+```text
+PA9  -> USART1_TX
+PA10 -> USART1_RX
+```
+
+---
+
+## V4 Update Protocol
+
+The Bootloader uses simple one-byte commands.
+
+| Command | Character | Purpose |
+|---|---:|---|
+| Start Update | `S` | Enter firmware update mode |
+| Erase | `R` | Erase Header and Application Flash area |
+| Data | `D` | Receive one Application data block |
+| Header | `H` | Receive and program the Firmware Header |
+| Verify | `V` | Validate Header, Vector Table and CRC32 |
+| End Update | `E` | Finish update and reset the STM32 |
+
+Bootloader responses:
+
+| Response | Character | Meaning |
+|---|---:|---|
+| ACK | `A` | Command completed successfully |
+| NACK | `N` | Command failed |
+| Ready | `Y` | STM32 ready to receive data |
+| Byte Received | `K` | One byte received correctly |
+| Buffer Received | `B` | Complete RAM buffer received |
+
+The current implementation uses an 8-byte Application data block.
+
+```text
+DATA_BLOCK_SIZE = 8 bytes
+```
+
+The small block size and byte-by-byte acknowledgement were useful for validating the complete UART → RAM → Flash path in Proteus.
+
+---
+
+## Application Data Transfer
+
+For each Application block, the sequence is:
+
+```text
+PC                                  STM32
+
+D ---------------------------------->
+                               Ready
+
+<--------------------------------- Y
+
+Byte 0 ---------------------------->
+<--------------------------------- K
+
+Byte 1 ---------------------------->
+<--------------------------------- K
+
+...
+
+Byte 7 ---------------------------->
+<--------------------------------- K
+
+                               Buffer complete
+<--------------------------------- B
+
+                               Program Flash
+<--------------------------------- A
+```
+
+After the ACK, the next block is sent.
+
+For the current 4608-byte Application:
+
+```text
+Firmware size : 4608 bytes
+Block size    : 8 bytes
+Blocks        : 576
+```
+
+---
+
+## Firmware Header Transfer
+
+The Header is sent **after the complete Application**.
+
+This is intentional.
+
+The Application is programmed first:
+
+```text
+0x08004400 ...
+```
+
+and only when the firmware transfer is complete is the Header written at:
+
+```text
+0x08004000
+```
+
+This reduces the risk of considering an interrupted update as valid.
+
+Header transfer:
+
+```text
+H
+|
+v
+STM32 Ready
+|
+v
+16 Header bytes
+|
+v
+Header stored in RAM
+|
+v
+Program Header in Flash
+|
+v
+ACK
+```
+
+Current Header example:
+
+```text
+AD 10 07 B0
+00 12 00 00
+B2 C8 26 B2
+00 00 01 00
+```
+
+which represents:
+
+```text
+Magic   : 0xB00710AD
+Size    : 4608
+CRC32   : 0xB226C8B2
+Version : 0x00010000
+```
+
+---
+
+## Firmware Verification
+
+After programming the Header, Python sends:
+
+```text
+V
+```
+
+The Bootloader verifies:
+
+```text
+Firmware Header
+      |
+      v
+Magic Number valid?
+      |
+      v
+Firmware Size valid?
+      |
+      v
+Application Vector Table valid?
+      |
+      +--> MSP
+      +--> Reset Handler
+      +--> Thumb bit
+      +--> Flash address
+      |
+      v
+Calculate CRC32
+      |
+      v
+Stored CRC == Calculated CRC?
+      |
+      +---- NO ----> NACK
+      |
+     YES
+      |
+      v
+     ACK
+```
+
+The final test returned:
+
+```text
+VERIFY response -> A
+
+Header validation      -> OK
+Application validation -> OK
+CRC32 verification     -> OK
+```
+
+---
+
+## End Update and Reset
+
+After successful verification, Python sends:
+
+```text
+E
+```
+
+The Bootloader performs one final validation before resetting the MCU.
+
+```text
+E
+|
+v
+Header valid?
+|
+v
+Application valid?
+|
+v
+CRC32 valid?
+|
++---- NO ----> NACK
+|
+YES
+|
+v
+ACK
+|
+v
+NVIC_SystemReset()
+```
+
+After reset, the Bootloader starts again.
+
+If no new update request is received, it validates the installed firmware and jumps to the Application.
+
+```text
+System Reset
+     |
+     v
+Bootloader starts
+     |
+     v
+UART update request?
+   /     \
+ YES      NO
+  |        |
+  v        v
+Update   Validate Header
+Mode        |
+            v
+       Validate Application
+            |
+            v
+         CRC32
+            |
+            v
+    Jump_To_Application()
+            |
+            v
+       PC13 blinking
+```
+
+---
+
+## Complete V4 Update Flow
+
+```text
+Python firmware_update.py
+          |
+          v
+Open serial port
+          |
+          v
+S - Start Update
+          |
+          v
+R - Erase old firmware
+          |
+          v
+D - Send Application blocks
+          |
+          v
+576 blocks programmed
+          |
+          v
+H - Program Firmware Header
+          |
+          v
+V - Verify firmware
+          |
+          v
+Header OK
+Vector Table OK
+CRC32 OK
+          |
+          v
+E - End Update
+          |
+          v
+ACK
+          |
+          v
+NVIC_SystemReset()
+          |
+          v
+Bootloader starts again
+          |
+          v
+Validate installed firmware
+          |
+          v
+Jump to Application
+          |
+          v
+PC13 LED blinking
+```
+
+---
+
+## V4 Final Validation
+
+The complete update was successfully tested with the following firmware:
+
+```text
+Application : 0x08004400 -> 0x080055FF
+Header      : 0x08004000 -> 0x0800400F
+
+Firmware size : 4608 bytes
+Blocks        : 576
+CRC32         : 0xB226C8B2
+Version       : 0x00010000
+```
+
+Python output:
+
+```text
+Firmware verification -> ACK
+
+Header validation      -> OK
+Application validation -> OK
+CRC32 verification     -> OK
+
+END UPDATE -> ACK
+STM32 reset requested
+
+UPDATE SUCCESSFUL
+```
+
+After the STM32 reset, the Bootloader validated the firmware and transferred execution to the Application.
+
+The PC13 LED started blinking successfully.
+
+This validates the complete chain:
+
+```text
+PC
+ |
+ v
+UART
+ |
+ v
+Bootloader
+ |
+ v
+Flash erase
+ |
+ v
+Application programming
+ |
+ v
+Header programming
+ |
+ v
+CRC verification
+ |
+ v
+MCU reset
+ |
+ v
+Firmware validation
+ |
+ v
+Application execution
+```
 
 ---
 
@@ -453,15 +818,26 @@ STM32F103C8T6 Flash — 64 KB
 +-----------------------------+
 | Bootloader                  |
 | 16 KB                       |
+|                             |
+| 0x08000000 - 0x08003FFF     |
 +-----------------------------+
+
 0x08004000
-| Firmware Header             |
-| Reserved: 1 KB              |
 +-----------------------------+
+| Firmware Header             |
+| Reserved region: 1 KB       |
+|                             |
+| 0x08004000 - 0x080043FF     |
++-----------------------------+
+
 0x08004400
++-----------------------------+
 | Application                 |
 | 47 KB                       |
+|                             |
+| 0x08004400 - 0x0800FFFF     |
 +-----------------------------+
+
 0x08010000
 ```
 
@@ -477,32 +853,37 @@ SRAM:
 
 ---
 
-# Project Structure
+# Repository Structure
 
 ```text
-01-stm32-custom-bootloader/
+embedded-automotive-portfolio/
 |
-|-- application/
-|   |-- Core/
-|   |-- Drivers/
-|   |-- Startup/
-|   |-- Application.ioc
-|   `-- STM32F103C8TX_FLASH.ld
+|-- firmware_update.py
 |
-|-- bootloader/
-|   |-- Core/
-|   |-- Drivers/
-|   |-- Startup/
-|   |-- Bootloader.ioc
-|   `-- STM32F103C8TX_FLASH.ld
-|
-|-- proteus/
-|   `-- STM32_Bootloader_Test.pdsprj
-|
-|-- generate_v3_image.py
-|-- Bootloader_Application_V3.hex
-|-- .gitignore
-`-- README.md
+`-- projects/
+    `-- 01-stm32-custom-bootloader/
+        |
+        |-- application/
+        |   |-- Core/
+        |   |-- Drivers/
+        |   |-- Startup/
+        |   |-- Application.ioc
+        |   `-- STM32F103C8TX_FLASH.ld
+        |
+        |-- bootloader/
+        |   |-- Core/
+        |   |-- Drivers/
+        |   |-- Startup/
+        |   |-- Bootloader.ioc
+        |   `-- STM32F103C8TX_FLASH.ld
+        |
+        |-- proteus/
+        |   `-- STM32_Bootloader_Test.pdsprj
+        |
+        |-- generate_v3_image.py
+        |-- Bootloader_Application_V3.hex
+        |-- .gitignore
+        `-- README.md
 ```
 
 ---
@@ -517,8 +898,10 @@ SRAM:
 - STM32 HAL
 - GNU ARM Toolchain
 - Linker Scripts
+- USART / UART
 - Intel HEX
 - Python
+- PySerial
 - IntelHex
 - Python `zlib`
 - Proteus 9 Professional
@@ -535,8 +918,7 @@ SRAM:
 - SRAM Memory Mapping
 - Linker Scripts
 - Cortex-M Vector Table
-- Main Stack Pointer (MSP)
-- Program Counter
+- Main Stack Pointer
 - Reset Handler
 - Startup Code
 - VTOR Relocation
@@ -547,8 +929,16 @@ SRAM:
 - Firmware Size Validation
 - CRC32
 - Firmware Integrity Verification
+- Flash Erase
+- Flash Half-Word Programming
+- Flash Read-Back Verification
+- UART Communication
+- Bootloader Command Protocol
+- Firmware Transfer
+- Firmware Activation
+- MCU Software Reset
+- Python Serial Communication
 - Intel HEX Manipulation
-- Firmware Image Generation
 - Bootloader/Application Separation
 
 ---
@@ -567,19 +957,26 @@ Completed.
 
 Completed.
 
-## 🔜 V4 — UART Firmware Update
+## ✅ V4 — UART Firmware Update
 
-Planned features:
+Completed.
 
-- UART communication protocol
-- Firmware reception
-- Bootloader command handling
-- Flash erase
+Implemented features:
+
+- USART1 communication
+- Update mode
+- Bootloader command parser
+- Application Flash erase
+- UART firmware reception
+- RAM buffering
 - Flash programming
-- Firmware Header reception
-- CRC verification
-- New firmware activation
-- Recovery behavior in case of update failure
+- Flash read-back verification
+- Firmware Header transfer
+- CRC32 verification
+- Final update validation
+- MCU reset
+- Automatic Application boot after update
+- Python firmware update tool
 
 ---
 
@@ -589,15 +986,15 @@ Planned features:
 
 - CAN communication
 - Firmware transfer over CAN
-- Bootloader command protocol
+- CAN-oriented Bootloader command protocol
 - Flash programming
 - CRC verification
 - Firmware activation
-- Multi-node / ECU-oriented architecture
+- ECU-oriented communication architecture
 
 ---
 
-## 🔜 V6 — Automotive Diagnostics
+## 🔜 V6 — Automotive Diagnostics / UDS
 
 Future extension toward an automotive diagnostic bootloader.
 
@@ -633,17 +1030,23 @@ Possible UDS services:
 | V1 | Bootloader to Application Jump | Completed |
 | V2 | Application Firmware Validation | Completed |
 | V3 | Firmware Header + CRC32 Integrity Verification | Completed |
-| V4 | UART Firmware Update | Planned |
+| V4 | UART Firmware Update | Completed |
 | V5 | CAN Firmware Update | Planned |
 | V6 | Automotive Diagnostics / UDS | Planned |
+
+Git tag for the UART update version:
+
+```text
+v4.0-uart-firmware-update
+```
 
 ---
 
 # Validation Method
 
-The project is validated using a simulated STM32F103C8 environment in Proteus.
+The project is tested using a simulated STM32F103C8 environment in Proteus.
 
-PC13 is configured as GPIO output:
+The Application toggles PC13:
 
 ```c
 while (1)
@@ -653,72 +1056,83 @@ while (1)
 }
 ```
 
-Successful PC13 LED blinking confirms that the Bootloader has accepted the firmware and successfully transferred execution to the Application.
+Successful LED blinking confirms that the Bootloader has accepted the firmware and transferred execution to the Application.
 
-If firmware validation fails, execution remains inside the Bootloader and the Application LED does not start blinking.
+For V4, the complete test also verifies that the Application was first transferred through UART, written into Flash, checked using CRC32, followed by an MCU reset and a new Bootloader-to-Application jump.
 
 ---
 
-# Current Bootloader Validation Sequence
+# Current Boot Sequence
 
 ```text
 RESET
   |
   v
-Firmware Header valid?
+Bootloader initialization
   |
   v
-Magic Number valid?
+UART update request?
+   / \
+ YES  NO
+  |    |
+  |    v
+  |  Firmware Header valid?
+  |    |
+  |    v
+  |  Application Vector Table valid?
+  |    |
+  |    v
+  |  CRC32 valid?
+  |    |
+  |    +---- NO ----> Stay in Bootloader
+  |    |
+  |   YES
+  |    |
+  |    v
+  |  Jump to Application
+  |    |
+  |    v
+  |  PC13 Blink
   |
   v
-Firmware Size valid?
+UART Update Mode
+  |
+  +--> Erase
+  |
+  +--> Program Application
+  |
+  +--> Program Header
+  |
+  +--> Verify CRC32
+  |
+  +--> End Update
   |
   v
-Application Vector Table valid?
-  |
-  +--> MSP valid?
-  +--> Reset Handler valid?
-  +--> Thumb bit valid?
-  +--> Application address valid?
-  |
-  v
-Calculate CRC32
-  |
-  v
-Stored CRC == Calculated CRC?
-       /        \
-     NO          YES
-     |            |
-     v            v
- Stay in      Jump to
- Bootloader   Application
-                  |
-                  v
-             PC13 Blink
+System Reset
 ```
 
 ---
 
 # Roadmap
 
-The long-term objective is to evolve this project from a basic STM32 bootloader into an automotive-oriented firmware update architecture:
+The long-term goal is to evolve the project toward an automotive-oriented firmware update architecture:
 
 ```text
-Basic Jump
-    |
-    v
+Bootloader Jump
+      |
+      v
 Firmware Validation
-    |
-    v
+      |
+      v
 Firmware Integrity
-    |
-    v
-UART Update
-    |
-    v
-CAN Update
-    |
-    v
+      |
+      v
+UART Firmware Update
+      |
+      v
+CAN Firmware Update
+      |
+      v
 UDS Diagnostic Bootloader
 ```
 
