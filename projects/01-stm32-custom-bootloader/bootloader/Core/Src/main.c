@@ -271,6 +271,7 @@ static void Bootloader_UDS_ProcessFrame(void)
 {
     uint8_t udsResponse[8];
     uint8_t udsResponseDlc = 0U;
+    uint8_t responseOk = 1U;
 
     if (UDS_ProcessSingleFrame(canRxData,
                                (uint8_t)canRxHeader.DLC,
@@ -288,8 +289,29 @@ static void Bootloader_UDS_ProcessFrame(void)
 
     if (udsResponseDlc > 0U)
     {
-        (void)Bootloader_UDS_SendFrame(udsResponse,
-                                       udsResponseDlc);
+        responseOk = Bootloader_UDS_SendFrame(udsResponse,
+                                              udsResponseDlc);
+    }
+
+    if ((responseOk == 1U) &&
+        (UDS_IsResetRequested() != 0U))
+    {
+        UDS_ClearResetRequest();
+
+        /*
+         * Give the positive response enough time to leave the
+         * simulated/physical transport before resetting.
+         */
+        if (PROTEUS_SIMULATION != 0U)
+        {
+            HAL_Delay(1000U);
+        }
+        else
+        {
+            HAL_Delay(10U);
+        }
+
+        NVIC_SystemReset();
     }
 }
 static uint8_t Bootloader_CAN_SimReceiveFrame(void)
