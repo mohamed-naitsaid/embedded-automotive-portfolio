@@ -980,17 +980,25 @@ Implemented features:
 
 ---
 
-## 🔜 V5 — CAN Firmware Update
+## ✅ V5 — CAN Firmware Update
 
-Planned features:
+Completed.
 
-- CAN communication
-- Firmware transfer over CAN
-- CAN-oriented Bootloader command protocol
-- Flash programming
-- CRC verification
-- Firmware activation
-- ECU-oriented communication architecture
+V5 adds a firmware update mechanism designed around CAN communication.
+
+### CAN Configuration
+
+```text
+Peripheral : bxCAN / CAN1
+CAN RX     : PA11
+CAN TX     : PA12
+Bit rate   : 500 kbit/s
+
+PCLK1      : 8 MHz
+Prescaler  : 1
+BS1        : 13 TQ
+BS2        : 2 TQ
+SJW        : 1 TQ
 
 ---
 
