@@ -115,6 +115,10 @@ static uint8_t uartRxByte;
 static uint8_t uartTxByte;
 static BootloaderMode_t bootMode = BOOT_MODE_NORMAL;
 static BootloaderTransport_t bootTransport = BOOT_TRANSPORT_NONE;
+
+static uint32_t udsFlashWriteAddress = APP_START_ADDRESS;
+static uint8_t udsFlashPendingByte;
+static uint8_t udsFlashPendingByteValid;
 /* USER CODE END PV */
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
@@ -132,6 +136,9 @@ static void Bootloader_CAN_Process(void);
 static uint8_t Bootloader_CAN_SimReceiveFrame(void);
 static uint8_t Bootloader_UDS_SendFrame(const uint8_t *data,
                                         uint8_t dlc);
+static uint8_t Bootloader_UDS_ProgramTransferBlock(const uint8_t *data,
+                                                   uint8_t length,
+                                                   uint8_t finalBlock);
 static void Bootloader_UDS_ProcessFrame(void);
 static void Bootloader_CAN_ProcessCommand(void);
 static void Bootloader_CAN_ProcessData(void);
@@ -267,11 +274,104 @@ static uint8_t Bootloader_UDS_SendFrame(const uint8_t *data,
     return 1U;
 }
 
+static uint8_t Bootloader_UDS_ProgramTransferBlock(const uint8_t *data,
+                                                   uint8_t length,
+                                                   uint8_t finalBlock)
+{
+    uint8_t index = 0U;
+    uint16_t halfWord;
+
+    if ((data == NULL) || (length == 0U))
+    {
+        return 0U;
+    }
+
+    /*
+     * STM32F103 Flash is programmed by half-word in this project.
+     * UDS TransferData may carry an odd number of bytes, so one byte
+     * can be kept until the following block arrives.
+     */
+    if (udsFlashPendingByteValid != 0U)
+    {
+        halfWord = (uint16_t)udsFlashPendingByte |
+                   ((uint16_t)data[0] << 8U);
+
+        if (Bootloader_ProgramHalfWord(udsFlashWriteAddress,
+                                      halfWord) == 0U)
+        {
+            return 0U;
+        }
+
+        udsFlashWriteAddress += 2U;
+        udsFlashPendingByteValid = 0U;
+        index = 1U;
+    }
+
+    while ((uint8_t)(index + 1U) < length)
+    {
+        halfWord = (uint16_t)data[index] |
+                   ((uint16_t)data[index + 1U] << 8U);
+
+        if (Bootloader_ProgramHalfWord(udsFlashWriteAddress,
+                                      halfWord) == 0U)
+        {
+            return 0U;
+        }
+
+        udsFlashWriteAddress += 2U;
+        index += 2U;
+    }
+
+    if (index < length)
+    {
+        if (finalBlock != 0U)
+        {
+            halfWord = (uint16_t)data[index] | 0xFF00U;
+
+            if (Bootloader_ProgramHalfWord(udsFlashWriteAddress,
+                                          halfWord) == 0U)
+            {
+                return 0U;
+            }
+
+            udsFlashWriteAddress += 2U;
+        }
+        else
+        {
+            udsFlashPendingByte = data[index];
+            udsFlashPendingByteValid = 1U;
+        }
+    }
+
+    if ((finalBlock != 0U) &&
+        (udsFlashPendingByteValid != 0U))
+    {
+        halfWord = (uint16_t)udsFlashPendingByte | 0xFF00U;
+
+        if (Bootloader_ProgramHalfWord(udsFlashWriteAddress,
+                                      halfWord) == 0U)
+        {
+            return 0U;
+        }
+
+        udsFlashWriteAddress += 2U;
+        udsFlashPendingByteValid = 0U;
+    }
+
+    return 1U;
+}
+
 static void Bootloader_UDS_ProcessFrame(void)
 {
     uint8_t udsResponse[8];
     uint8_t udsResponseDlc = 0U;
     uint8_t responseOk = 1U;
+
+    uint8_t transferData[5];
+    uint8_t transferLength = 0U;
+    uint8_t finalBlock = 0U;
+    uint32_t transferAddress = 0U;
+    uint8_t flashOk;
 
     if (UDS_ProcessSingleFrame(canRxData,
                                (uint8_t)canRxHeader.DLC,
@@ -287,6 +387,61 @@ static void Bootloader_UDS_ProcessFrame(void)
         bootTransport = BOOT_TRANSPORT_CAN;
     }
 
+    /*
+     * A valid RequestDownload is accepted by the UDS layer first,
+     * then the Bootloader prepares Flash before sending 0x74.
+     */
+    if (UDS_IsDownloadPreparationPending() != 0U)
+    {
+        flashOk = Bootloader_EraseFirmwareArea();
+
+        if (flashOk != 0U)
+        {
+            udsFlashWriteAddress = UDS_GetDownloadAddress();
+            udsFlashPendingByte = 0U;
+            udsFlashPendingByteValid = 0U;
+        }
+
+        UDS_CompleteDownloadPreparation(flashOk,
+                                        udsResponse,
+                                        &udsResponseDlc);
+    }
+
+    /*
+     * TransferData is validated by uds.c.
+     * Only a validated block reaches Flash.
+     */
+    if (UDS_IsTransferDataPending() != 0U)
+    {
+        if (UDS_GetPendingTransferData(&transferAddress,
+                                       transferData,
+                                       &transferLength,
+                                       &finalBlock) == 0U)
+        {
+            UDS_CompleteTransferData(0U,
+                                     udsResponse,
+                                     &udsResponseDlc);
+        }
+        else
+        {
+            /*
+             * transferAddress is the logical address calculated by UDS.
+             * The Flash stream helper handles a possible pending odd byte.
+             */
+            (void)transferAddress;
+
+            flashOk = Bootloader_UDS_ProgramTransferBlock(
+                transferData,
+                transferLength,
+                finalBlock
+            );
+
+            UDS_CompleteTransferData(flashOk,
+                                     udsResponse,
+                                     &udsResponseDlc);
+        }
+    }
+
     if (udsResponseDlc > 0U)
     {
         responseOk = Bootloader_UDS_SendFrame(udsResponse,
@@ -298,10 +453,6 @@ static void Bootloader_UDS_ProcessFrame(void)
     {
         UDS_ClearResetRequest();
 
-        /*
-         * Give the positive response enough time to leave the
-         * simulated/physical transport before resetting.
-         */
         if (PROTEUS_SIMULATION != 0U)
         {
             HAL_Delay(1000U);
