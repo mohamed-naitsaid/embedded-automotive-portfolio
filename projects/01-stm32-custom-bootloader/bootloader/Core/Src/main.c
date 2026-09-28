@@ -10,6 +10,7 @@
 #include "main.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "uds.h"
 /* USER CODE END Includes */
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
@@ -40,6 +41,8 @@ typedef struct
 #define CAN_ID_DATA              0x601U
 #define CAN_ID_HEADER            0x602U
 #define CAN_ID_RESPONSE          0x650U
+#define CAN_ID_UDS_REQUEST       0x7E0U
+#define CAN_ID_UDS_RESPONSE      0x7E8U
 #define CAN_SEQUENCE_SIZE        2U
 #define CAN_DATA_PAYLOAD_SIZE    6U
 #define CAN_RESPONSE_DLC         5U
@@ -127,6 +130,9 @@ static uint8_t Bootloader_CAN_SendResponse(uint8_t response,
                                            uint8_t errorCode);
 static void Bootloader_CAN_Process(void);
 static uint8_t Bootloader_CAN_SimReceiveFrame(void);
+static uint8_t Bootloader_UDS_SendFrame(const uint8_t *data,
+                                        uint8_t dlc);
+static void Bootloader_UDS_ProcessFrame(void);
 static void Bootloader_CAN_ProcessCommand(void);
 static void Bootloader_CAN_ProcessData(void);
 static void Bootloader_CAN_ProcessHeader(void);
@@ -160,7 +166,7 @@ static uint8_t Bootloader_CAN_Init(void)
 {
     CAN_FilterTypeDef filter = {0};
     /*
-     * One 16-bit list filter accepts the three V5 request IDs.
+     * One 16-bit list filter accepts the three V5 IDs and the UDS request ID.
      * Standard identifiers are stored left-shifted by 5 bits.
      */
     filter.FilterBank = 0;
@@ -169,7 +175,7 @@ static uint8_t Bootloader_CAN_Init(void)
     filter.FilterIdHigh = (CAN_ID_COMMAND << 5U);
     filter.FilterIdLow = (CAN_ID_DATA << 5U);
     filter.FilterMaskIdHigh = (CAN_ID_HEADER << 5U);
-    filter.FilterMaskIdLow = (CAN_ID_COMMAND << 5U);
+    filter.FilterMaskIdLow = (CAN_ID_UDS_REQUEST << 5U);
     filter.FilterFIFOAssignment = CAN_RX_FIFO0;
     filter.FilterActivation = ENABLE;
     filter.SlaveStartFilterBank = 14;
@@ -193,7 +199,99 @@ static void Bootloader_CAN_ResetUpdateState(void)
     for (i = 0U; i < HEADER_DATA_SIZE; i++)
         headerBuffer[i] = 0U;
 }
+static uint8_t Bootloader_UDS_SendFrame(const uint8_t *data,
+                                        uint8_t dlc)
+{
+    uint32_t startTick;
+    uint32_t i;
+    uint8_t simFrame[12];
 
+    if ((data == NULL) || (dlc == 0U) || (dlc > 8U))
+    {
+        return 0U;
+    }
+
+    canTxHeader.StdId = CAN_ID_UDS_RESPONSE;
+    canTxHeader.ExtId = 0U;
+    canTxHeader.IDE = CAN_ID_STD;
+    canTxHeader.RTR = CAN_RTR_DATA;
+    canTxHeader.DLC = dlc;
+    canTxHeader.TransmitGlobalTime = DISABLE;
+
+    for (i = 0U; i < dlc; i++)
+    {
+        canTxData[i] = data[i];
+    }
+
+    if (PROTEUS_SIMULATION != 0U)
+    {
+        simFrame[0] = CAN_SIM_FRAME_START;
+        simFrame[1] = (uint8_t)(CAN_ID_UDS_RESPONSE & 0xFFU);
+        simFrame[2] = (uint8_t)((CAN_ID_UDS_RESPONSE >> 8U) & 0xFFU);
+        simFrame[3] = dlc;
+
+        for (i = 0U; i < dlc; i++)
+        {
+            simFrame[4U + i] = data[i];
+        }
+
+        if (HAL_UART_Transmit(&huart1,
+                              simFrame,
+                              4U + dlc,
+                              HAL_MAX_DELAY) != HAL_OK)
+        {
+            return 0U;
+        }
+
+        return 1U;
+    }
+
+    startTick = HAL_GetTick();
+
+    while (HAL_CAN_GetTxMailboxesFreeLevel(&hcan) == 0U)
+    {
+        if ((HAL_GetTick() - startTick) >= CAN_TX_TIMEOUT)
+        {
+            return 0U;
+        }
+    }
+
+    if (HAL_CAN_AddTxMessage(&hcan,
+                             &canTxHeader,
+                             canTxData,
+                             &canTxMailbox) != HAL_OK)
+    {
+        return 0U;
+    }
+
+    return 1U;
+}
+
+static void Bootloader_UDS_ProcessFrame(void)
+{
+    uint8_t udsResponse[8];
+    uint8_t udsResponseDlc = 0U;
+
+    if (UDS_ProcessSingleFrame(canRxData,
+                               (uint8_t)canRxHeader.DLC,
+                               udsResponse,
+                               &udsResponseDlc) == 0U)
+    {
+        return;
+    }
+
+    if (UDS_GetSession() == UDS_SESSION_PROGRAMMING)
+    {
+        bootMode = BOOT_MODE_UPDATE;
+        bootTransport = BOOT_TRANSPORT_CAN;
+    }
+
+    if (udsResponseDlc > 0U)
+    {
+        (void)Bootloader_UDS_SendFrame(udsResponse,
+                                       udsResponseDlc);
+    }
+}
 static uint8_t Bootloader_CAN_SimReceiveFrame(void)
 {
     uint8_t frameHeader[3];
@@ -248,6 +346,10 @@ static uint8_t Bootloader_CAN_SimReceiveFrame(void)
     else if (stdId == CAN_ID_HEADER)
     {
         Bootloader_CAN_ProcessHeader();
+    }
+    else if (stdId == CAN_ID_UDS_REQUEST)
+    {
+        Bootloader_UDS_ProcessFrame();
     }
     else
     {
@@ -758,6 +860,10 @@ static void Bootloader_CAN_Process(void)
     {
         Bootloader_CAN_ProcessHeader();
     }
+    else if (canRxHeader.StdId == CAN_ID_UDS_REQUEST)
+    {
+        Bootloader_UDS_ProcessFrame();
+    }
 }
 static void Bootloader_WaitForUpdateRequest(void)
 {
@@ -899,7 +1005,7 @@ static uint8_t Bootloader_IsHeaderValid(void)
         (const volatile FirmwareHeader_t *)APP_HEADER_ADDRESS;
     if (header->magic != FW_MAGIC_NUMBER)
         return 0U;
-    maxFirmwareSize =
+maxFirmwareSize =
         APP_END_ADDRESS - APP_START_ADDRESS;
     if (header->firmware_size == 0U)
         return 0U;
@@ -1253,6 +1359,7 @@ int main(void)
       MX_CAN_Init();
   }
   /* USER CODE BEGIN 2 */
+  UDS_Init();
   /*
    * Proteus 9.0 SP2 does not correctly model bxCAN for this MCU model.
    * Keep CAN disabled only for simulation. Set PROTEUS_SIMULATION to 0
