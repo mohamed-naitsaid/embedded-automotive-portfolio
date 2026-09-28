@@ -77,7 +77,7 @@ typedef struct
 #define BL_BYTE_RECEIVED         'K'
 #define BL_BUFFER_RECEIVED       'B'
 #if PROTEUS_SIMULATION
-#define UART_RX_TIMEOUT          15000U
+#define UART_RX_TIMEOUT          60000U
 #else
 #define UART_RX_TIMEOUT          3000U
 #endif
