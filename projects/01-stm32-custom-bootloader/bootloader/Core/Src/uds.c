@@ -21,6 +21,7 @@ static uint32_t udsCurrentSeed = UDS_SECURITY_SEED_VALUE;
 static uint8_t udsDownloadRequested = 0U;
 static uint8_t udsDownloadPreparationPending = 0U;
 static uint8_t udsDownloadReady = 0U;
+static uint8_t udsTransferExited = 0U;
 static uint32_t udsDownloadAddress = 0U;
 static uint32_t udsDownloadSize = 0U;
 static uint32_t udsTransferredBytes = 0U;
@@ -103,6 +104,7 @@ static void UDS_ResetDownloadState(void)
     udsDownloadRequested = 0U;
     udsDownloadPreparationPending = 0U;
     udsDownloadReady = 0U;
+    udsTransferExited = 0U;
     udsDownloadAddress = 0U;
     udsDownloadSize = 0U;
 
@@ -441,6 +443,7 @@ static void UDS_ProcessRequestDownload(const uint8_t *request,
     udsDownloadRequested = 1U;
     udsDownloadPreparationPending = 1U;
     udsDownloadReady = 0U;
+    udsTransferExited = 0U;
     udsDownloadAddress = memoryAddress;
     udsDownloadSize = memorySize;
 
@@ -466,7 +469,8 @@ static void UDS_ProcessTransferData(const uint8_t *request,
     if ((udsCurrentSession != UDS_SESSION_PROGRAMMING) ||
         (udsSecurityUnlocked == 0U) ||
         (udsDownloadRequested == 0U) ||
-        (udsDownloadReady == 0U))
+        (udsDownloadReady == 0U) ||
+        (udsTransferExited != 0U))
     {
         UDS_BuildNegativeResponse(
             UDS_SID_TRANSFER_DATA,
@@ -564,6 +568,70 @@ static void UDS_ProcessTransferData(const uint8_t *request,
     *responseDlc = 0U;
 }
 
+
+static void UDS_ProcessRequestTransferExit(uint8_t singleFrameLength,
+                                           uint8_t *response,
+                                           uint8_t *responseDlc)
+{
+    /*
+     * V6.6 does not use transferRequestParameterRecord.
+     * Therefore the request contains only SID 0x37.
+     */
+    if (singleFrameLength != 1U)
+    {
+        UDS_BuildNegativeResponse(
+            UDS_SID_REQUEST_TRANSFER_EXIT,
+            UDS_NRC_INCORRECT_MESSAGE_LENGTH,
+            response,
+            responseDlc
+        );
+        return;
+    }
+
+    if ((udsCurrentSession != UDS_SESSION_PROGRAMMING) ||
+        (udsSecurityUnlocked == 0U) ||
+        (udsDownloadRequested == 0U) ||
+        (udsDownloadReady == 0U) ||
+        (udsTransferExited != 0U) ||
+        (udsTransferDataPending != 0U))
+    {
+        UDS_BuildNegativeResponse(
+            UDS_SID_REQUEST_TRANSFER_EXIT,
+            UDS_NRC_REQUEST_SEQUENCE_ERROR,
+            response,
+            responseDlc
+        );
+        return;
+    }
+
+    /*
+     * TransferExit is accepted only when every byte announced
+     * by RequestDownload has been successfully programmed.
+     */
+    if (udsTransferredBytes != udsDownloadSize)
+    {
+        UDS_BuildNegativeResponse(
+            UDS_SID_REQUEST_TRANSFER_EXIT,
+            UDS_NRC_REQUEST_SEQUENCE_ERROR,
+            response,
+            responseDlc
+        );
+        return;
+    }
+
+    udsTransferExited = 1U;
+
+    /*
+     * Positive response:
+     * 01 77
+     */
+    response[0] = 0x01U;
+    response[1] = UDS_SID_REQUEST_TRANSFER_EXIT +
+                  UDS_POSITIVE_RESPONSE_OFFSET;
+
+    *responseDlc = 2U;
+}
+
 void UDS_Init(void)
 {
     udsCurrentSession = UDS_SESSION_DEFAULT;
@@ -658,6 +726,11 @@ uint8_t UDS_IsDownloadComplete(void)
     }
 
     return 0U;
+}
+
+uint8_t UDS_IsTransferExited(void)
+{
+    return udsTransferExited;
 }
 
 uint8_t UDS_IsTransferDataPending(void)
@@ -841,6 +914,16 @@ uint8_t UDS_ProcessSingleFrame(const uint8_t *request,
         {
             UDS_ProcessTransferData(
                 request,
+                singleFrameLength,
+                response,
+                responseDlc
+            );
+            break;
+        }
+
+        case UDS_SID_REQUEST_TRANSFER_EXIT:
+        {
+            UDS_ProcessRequestTransferExit(
                 singleFrameLength,
                 response,
                 responseDlc

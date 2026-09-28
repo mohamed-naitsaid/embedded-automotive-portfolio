@@ -10,6 +10,7 @@
 #define UDS_SID_SECURITY_ACCESS              0x27U
 #define UDS_SID_REQUEST_DOWNLOAD             0x34U
 #define UDS_SID_TRANSFER_DATA                0x36U
+#define UDS_SID_REQUEST_TRANSFER_EXIT        0x37U
 
 #define UDS_SESSION_DEFAULT                  0x01U
 #define UDS_SESSION_PROGRAMMING              0x02U
@@ -61,6 +62,8 @@ uint32_t UDS_GetDownloadSize(void);
 uint32_t UDS_GetTransferredBytes(void);
 
 uint8_t UDS_IsDownloadComplete(void);
+
+uint8_t UDS_IsTransferExited(void);
 
 uint8_t UDS_IsTransferDataPending(void);
 
