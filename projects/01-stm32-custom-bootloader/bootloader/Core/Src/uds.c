@@ -22,6 +22,8 @@ static uint8_t udsDownloadRequested = 0U;
 static uint8_t udsDownloadPreparationPending = 0U;
 static uint8_t udsDownloadReady = 0U;
 static uint8_t udsTransferExited = 0U;
+static uint8_t udsFinalizationPending = 0U;
+static uint32_t udsExpectedCRC32 = 0U;
 static uint32_t udsDownloadAddress = 0U;
 static uint32_t udsDownloadSize = 0U;
 static uint32_t udsTransferredBytes = 0U;
@@ -105,6 +107,8 @@ static void UDS_ResetDownloadState(void)
     udsDownloadPreparationPending = 0U;
     udsDownloadReady = 0U;
     udsTransferExited = 0U;
+    udsFinalizationPending = 0U;
+    udsExpectedCRC32 = 0U;
     udsDownloadAddress = 0U;
     udsDownloadSize = 0U;
 
@@ -444,6 +448,8 @@ static void UDS_ProcessRequestDownload(const uint8_t *request,
     udsDownloadPreparationPending = 1U;
     udsDownloadReady = 0U;
     udsTransferExited = 0U;
+    udsFinalizationPending = 0U;
+    udsExpectedCRC32 = 0U;
     udsDownloadAddress = memoryAddress;
     udsDownloadSize = memorySize;
 
@@ -569,31 +575,18 @@ static void UDS_ProcessTransferData(const uint8_t *request,
 }
 
 
-static void UDS_ProcessRequestTransferExit(uint8_t singleFrameLength,
+static void UDS_ProcessRequestTransferExit(const uint8_t *request,
+                                           uint8_t singleFrameLength,
                                            uint8_t *response,
                                            uint8_t *responseDlc)
 {
-    /*
-     * V6.6 does not use transferRequestParameterRecord.
-     * Therefore the request contains only SID 0x37.
-     */
-    if (singleFrameLength != 1U)
-    {
-        UDS_BuildNegativeResponse(
-            UDS_SID_REQUEST_TRANSFER_EXIT,
-            UDS_NRC_INCORRECT_MESSAGE_LENGTH,
-            response,
-            responseDlc
-        );
-        return;
-    }
-
     if ((udsCurrentSession != UDS_SESSION_PROGRAMMING) ||
         (udsSecurityUnlocked == 0U) ||
         (udsDownloadRequested == 0U) ||
         (udsDownloadReady == 0U) ||
         (udsTransferExited != 0U) ||
-        (udsTransferDataPending != 0U))
+        (udsTransferDataPending != 0U) ||
+        (udsFinalizationPending != 0U))
     {
         UDS_BuildNegativeResponse(
             UDS_SID_REQUEST_TRANSFER_EXIT,
@@ -604,10 +597,6 @@ static void UDS_ProcessRequestTransferExit(uint8_t singleFrameLength,
         return;
     }
 
-    /*
-     * TransferExit is accepted only when every byte announced
-     * by RequestDownload has been successfully programmed.
-     */
     if (udsTransferredBytes != udsDownloadSize)
     {
         UDS_BuildNegativeResponse(
@@ -619,17 +608,48 @@ static void UDS_ProcessRequestTransferExit(uint8_t singleFrameLength,
         return;
     }
 
-    udsTransferExited = 1U;
+    /*
+     * Legacy V6.6 form:
+     * 01 37
+     *
+     * It closes the transport sequence without firmware activation.
+     */
+    if (singleFrameLength == 1U)
+    {
+        udsTransferExited = 1U;
+
+        response[0] = 0x01U;
+        response[1] = UDS_SID_REQUEST_TRANSFER_EXIT +
+                      UDS_POSITIVE_RESPONSE_OFFSET;
+
+        *responseDlc = 2U;
+        return;
+    }
 
     /*
-     * Positive response:
-     * 01 77
+     * V6.7 full-update form:
+     *
+     * 05 37 CRC3 CRC2 CRC1 CRC0
+     *
+     * CRC32 is sent in network byte order (big-endian).
+     * The Bootloader performs CRC verification and Header creation
+     * before the positive 0x77 response is released.
      */
-    response[0] = 0x01U;
-    response[1] = UDS_SID_REQUEST_TRANSFER_EXIT +
-                  UDS_POSITIVE_RESPONSE_OFFSET;
+    if (singleFrameLength == 5U)
+    {
+        udsExpectedCRC32 = UDS_ReadUint32BE(&request[2]);
+        udsFinalizationPending = 1U;
 
-    *responseDlc = 2U;
+        *responseDlc = 0U;
+        return;
+    }
+
+    UDS_BuildNegativeResponse(
+        UDS_SID_REQUEST_TRANSFER_EXIT,
+        UDS_NRC_INCORRECT_MESSAGE_LENGTH,
+        response,
+        responseDlc
+    );
 }
 
 void UDS_Init(void)
@@ -731,6 +751,47 @@ uint8_t UDS_IsDownloadComplete(void)
 uint8_t UDS_IsTransferExited(void)
 {
     return udsTransferExited;
+}
+
+uint8_t UDS_IsFinalizationPending(void)
+{
+    return udsFinalizationPending;
+}
+
+uint32_t UDS_GetExpectedCRC32(void)
+{
+    return udsExpectedCRC32;
+}
+
+void UDS_CompleteFinalization(uint8_t success,
+                              uint8_t *response,
+                              uint8_t *responseDlc)
+{
+    if ((response == 0) || (responseDlc == 0))
+    {
+        return;
+    }
+
+    udsFinalizationPending = 0U;
+
+    if (success == 0U)
+    {
+        UDS_BuildNegativeResponse(
+            UDS_SID_REQUEST_TRANSFER_EXIT,
+            UDS_NRC_GENERAL_PROGRAMMING_FAILURE,
+            response,
+            responseDlc
+        );
+        return;
+    }
+
+    udsTransferExited = 1U;
+
+    response[0] = 0x01U;
+    response[1] = UDS_SID_REQUEST_TRANSFER_EXIT +
+                  UDS_POSITIVE_RESPONSE_OFFSET;
+
+    *responseDlc = 2U;
 }
 
 uint8_t UDS_IsTransferDataPending(void)
@@ -924,6 +985,7 @@ uint8_t UDS_ProcessSingleFrame(const uint8_t *request,
         case UDS_SID_REQUEST_TRANSFER_EXIT:
         {
             UDS_ProcessRequestTransferExit(
+                request,
                 singleFrameLength,
                 response,
                 responseDlc

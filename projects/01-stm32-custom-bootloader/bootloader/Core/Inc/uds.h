@@ -65,6 +65,14 @@ uint8_t UDS_IsDownloadComplete(void);
 
 uint8_t UDS_IsTransferExited(void);
 
+uint8_t UDS_IsFinalizationPending(void);
+
+uint32_t UDS_GetExpectedCRC32(void);
+
+void UDS_CompleteFinalization(uint8_t success,
+                              uint8_t *response,
+                              uint8_t *responseDlc);
+
 uint8_t UDS_IsTransferDataPending(void);
 
 uint8_t UDS_GetPendingTransferData(uint32_t *address,

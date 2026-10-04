@@ -47,6 +47,7 @@ typedef struct
 #define CAN_DATA_PAYLOAD_SIZE    6U
 #define CAN_RESPONSE_DLC         5U
 #define CAN_TX_TIMEOUT           100U
+#define CAN_SIM_UART_TIMEOUT     2000U
 #define CAN_SIM_FRAME_START      0xC5U
 #define CAN_ERROR_NONE           0x00U
 #define CAN_ERROR_STATE          0x01U
@@ -62,6 +63,7 @@ typedef struct
 #define SRAM_START_ADDRESS       0x20000000U
 #define SRAM_END_ADDRESS         0x20005000U
 #define FW_MAGIC_NUMBER          0xB00710ADU
+#define FW_VERSION               0x00010000U
 #define CRC32_POLYNOMIAL         0xEDB88320U
 #define CMD_PING                 'P'
 #define CMD_START_UPDATE         'S'
@@ -77,7 +79,7 @@ typedef struct
 #define BL_BYTE_RECEIVED         'K'
 #define BL_BUFFER_RECEIVED       'B'
 #if PROTEUS_SIMULATION
-#define UART_RX_TIMEOUT          60000U
+#define UART_RX_TIMEOUT          15000U
 #else
 #define UART_RX_TIMEOUT          3000U
 #endif
@@ -119,6 +121,7 @@ static BootloaderTransport_t bootTransport = BOOT_TRANSPORT_NONE;
 static uint32_t udsFlashWriteAddress = APP_START_ADDRESS;
 static uint8_t udsFlashPendingByte;
 static uint8_t udsFlashPendingByteValid;
+
 /* USER CODE END PV */
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
@@ -139,6 +142,7 @@ static uint8_t Bootloader_UDS_SendFrame(const uint8_t *data,
 static uint8_t Bootloader_UDS_ProgramTransferBlock(const uint8_t *data,
                                                    uint8_t length,
                                                    uint8_t finalBlock);
+static uint8_t Bootloader_UDS_FinalizeFirmware(uint32_t expectedCRC);
 static void Bootloader_UDS_ProcessFrame(void);
 static void Bootloader_CAN_ProcessCommand(void);
 static void Bootloader_CAN_ProcessData(void);
@@ -361,6 +365,62 @@ static uint8_t Bootloader_UDS_ProgramTransferBlock(const uint8_t *data,
     return 1U;
 }
 
+static uint8_t Bootloader_UDS_FinalizeFirmware(uint32_t expectedCRC)
+{
+    FirmwareHeader_t header;
+    uint32_t calculatedCRC;
+    uint32_t firmwareSize;
+
+    firmwareSize = UDS_GetDownloadSize();
+
+    if ((UDS_IsDownloadComplete() == 0U) ||
+        (UDS_GetDownloadAddress() != APP_START_ADDRESS) ||
+        (firmwareSize == 0U) ||
+        ((APP_START_ADDRESS + firmwareSize) > APP_END_ADDRESS))
+    {
+        return 0U;
+    }
+
+    if (Bootloader_IsApplicationValid() == 0U)
+    {
+        return 0U;
+    }
+
+    calculatedCRC =
+        Bootloader_CalculateCRC32(APP_START_ADDRESS,
+                                  firmwareSize);
+
+    if (calculatedCRC != expectedCRC)
+    {
+        return 0U;
+    }
+
+    /*
+     * The Firmware Header is written only after the full Application
+     * has been programmed and its CRC32 has been validated.
+     */
+    header.magic = FW_MAGIC_NUMBER;
+    header.firmware_size = firmwareSize;
+    header.crc32 = calculatedCRC;
+    header.version = FW_VERSION;
+
+    if (Bootloader_ProgramBuffer(APP_HEADER_ADDRESS,
+                                 (const uint8_t *)&header,
+                                 sizeof(FirmwareHeader_t)) == 0U)
+    {
+        return 0U;
+    }
+
+    if ((Bootloader_IsHeaderValid() == 0U) ||
+        (Bootloader_IsApplicationValid() == 0U) ||
+        (Bootloader_IsFirmwareIntegrityValid() == 0U))
+    {
+        return 0U;
+    }
+
+    return 1U;
+}
+
 static void Bootloader_UDS_ProcessFrame(void)
 {
     uint8_t udsResponse[8];
@@ -371,6 +431,7 @@ static void Bootloader_UDS_ProcessFrame(void)
     uint8_t transferLength = 0U;
     uint8_t finalBlock = 0U;
     uint32_t transferAddress = 0U;
+    uint32_t expectedCRC = 0U;
     uint8_t flashOk;
 
     if (UDS_ProcessSingleFrame(canRxData,
@@ -388,8 +449,8 @@ static void Bootloader_UDS_ProcessFrame(void)
     }
 
     /*
-     * A valid RequestDownload is accepted by the UDS layer first,
-     * then the Bootloader prepares Flash before sending 0x74.
+     * RequestDownload:
+     * UDS validates the request first, then the Bootloader erases Flash.
      */
     if (UDS_IsDownloadPreparationPending() != 0U)
     {
@@ -408,8 +469,8 @@ static void Bootloader_UDS_ProcessFrame(void)
     }
 
     /*
-     * TransferData is validated by uds.c.
-     * Only a validated block reaches Flash.
+     * TransferData:
+     * only a validated block reaches the STM32 Flash layer.
      */
     if (UDS_IsTransferDataPending() != 0U)
     {
@@ -424,10 +485,6 @@ static void Bootloader_UDS_ProcessFrame(void)
         }
         else
         {
-            /*
-             * transferAddress is the logical address calculated by UDS.
-             * The Flash stream helper handles a possible pending odd byte.
-             */
             (void)transferAddress;
 
             flashOk = Bootloader_UDS_ProgramTransferBlock(
@@ -440,6 +497,23 @@ static void Bootloader_UDS_ProcessFrame(void)
                                      udsResponse,
                                      &udsResponseDlc);
         }
+    }
+
+    /*
+     * RequestTransferExit with CRC32:
+     * calculate CRC from Flash, validate the Application, create the
+     * Firmware Header and verify it before sending positive response 0x77.
+     */
+    if (UDS_IsFinalizationPending() != 0U)
+    {
+        expectedCRC = UDS_GetExpectedCRC32();
+
+        flashOk =
+            Bootloader_UDS_FinalizeFirmware(expectedCRC);
+
+        UDS_CompleteFinalization(flashOk,
+                                 udsResponse,
+                                 &udsResponseDlc);
     }
 
     if (udsResponseDlc > 0U)
@@ -479,7 +553,7 @@ static uint8_t Bootloader_CAN_SimReceiveFrame(void)
     if (HAL_UART_Receive(&huart1,
                          frameHeader,
                          3U,
-                         HAL_MAX_DELAY) != HAL_OK)
+                         CAN_SIM_UART_TIMEOUT) != HAL_OK)
     {
         return 0U;
     }
@@ -498,7 +572,7 @@ static uint8_t Bootloader_CAN_SimReceiveFrame(void)
         if (HAL_UART_Receive(&huart1,
                              canRxData,
                              frameHeader[2],
-                             HAL_MAX_DELAY) != HAL_OK)
+                             CAN_SIM_UART_TIMEOUT) != HAL_OK)
         {
             return 0U;
         }
@@ -1041,17 +1115,21 @@ static void Bootloader_CAN_Process(void)
 static void Bootloader_WaitForUpdateRequest(void)
 {
     uint32_t startTick;
+
     startTick = HAL_GetTick();
+
     while ((HAL_GetTick() - startTick) < UART_RX_TIMEOUT)
     {
         if (PROTEUS_SIMULATION == 0U)
         {
             Bootloader_CAN_Process();
+
             if (bootMode == BOOT_MODE_UPDATE)
             {
                 break;
             }
         }
+
         if (HAL_UART_Receive(&huart1,
                              &uartRxByte,
                              1U,
@@ -1066,6 +1144,14 @@ static void Bootloader_WaitForUpdateRequest(void)
             {
                 Bootloader_ProcessCommand(uartRxByte);
             }
+
+            /*
+             * Keep the Proteus diagnostic window alive while the tester
+             * is actively communicating, but allow a normal boot after
+             * 15 seconds of inactivity.
+             */
+            startTick = HAL_GetTick();
+
             if (bootMode == BOOT_MODE_UPDATE)
             {
                 break;
@@ -1148,6 +1234,7 @@ static uint8_t Bootloader_EraseFirmwareArea(void)
     HAL_FLASH_Lock();
     return 1U;
 }
+__attribute__((noinline, optimize("O0")))
 static uint32_t Bootloader_CalculateCRC32(uint32_t startAddress,
                                            uint32_t length)
 {
