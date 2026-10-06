@@ -1,384 +1,178 @@
 # Embedded Automotive Portfolio 🚗⚡
 
-Welcome to my Embedded Software Engineering portfolio.
+Welcome to my Embedded Software & Automotive Systems portfolio.
 
-This repository documents my learning journey in **Embedded Systems and Automotive Software Engineering**, with a focus on programming, microcontrollers, real-time systems, communication protocols, and automotive ECU software.
+I am an engineering student in **Automobile & Digital Solutions**, with a strong interest in **embedded software, automotive ECUs, ARM microcontrollers and AUTOSAR Classic**.
 
-The goal is to combine **theoretical knowledge with practical implementation, testing, debugging, and documentation**.
+This repository documents my practical learning journey through embedded projects, simulations, code generation, debugging and automotive software concepts.
 
----
-
-## 🎯 Objective
-
-Develop strong practical skills in:
-
-* Embedded C
-* C/C++
-* ARM Cortex-M
-* STM32
-* Bare-metal programming
-* MCU driver development
-* RTOS / FreeRTOS
-* CAN communication
-* UDS diagnostics
-* Automotive ECU architecture
-* AUTOSAR
-* ISO 26262
-* MISRA-C
-* Embedded debugging and testing
+The objective is not to present every technology as mastered, but to progressively build and demonstrate practical skills through working projects.
 
 ---
 
-## 🧠 Learning Path
+## 🎯 Main Focus
 
-### Embedded Foundations
+My current technical focus is:
 
-* C programming
-* Embedded C
-* Data types and memory
-* Pointers
-* Arrays
-* Structures, unions and enumerations
-* Function pointers
-* Bit manipulation
-* Stack and heap
-* `static`, `const` and `volatile`
-* Memory management
-
-### ARM & Microcontrollers
-
-* ARM Cortex-M architecture
-* Memory map
-* CPU registers
-* Startup code
-* Vector table
-* Exceptions
-* Interrupts
-* Stack
-* Clock configuration
-* STM32 fundamentals
-
-### Bare-Metal Development
-
-* GPIO
-* Interrupts
-* Timers
-* PWM
-* UART
-* SPI
-* I2C
-* ADC
-* DMA
-* Watchdog
-* Register-level programming
-* Hardware abstraction
-* Driver development
-
-### Real-Time Embedded Systems
-
-* Real-time concepts
-* RTOS fundamentals
-* FreeRTOS
-* Tasks
-* Scheduling
-* Priorities
-* Context switching
-* Queues
-* Semaphores
-* Mutexes
-* Synchronization
-* Interrupts
-* Priority inversion
-* Timing analysis
-
-### Automotive Embedded Systems
-
-* ECU architecture
-* CAN
-* CAN communication
-* CAN drivers
-* UDS
-* Diagnostic services
-* DTCs
-* Bootloader concepts
-* Watchdog
-* Fault handling
-* State machines
-* Error handling
-
-### Automotive Software Architecture
-
-* AUTOSAR fundamentals
-* Application Software Components
-* RTE
-* BSW
-* MCAL
-* COM Stack
-* COM
-* PduR
-* CanIf
-* CAN Driver
-* DCM
-* DEM
-* NvM
-
-### Functional Safety & Software Quality
-
-* ISO 26262 fundamentals
-* Functional safety
-* Hazard analysis
-* ASIL
-* Safety goals
-* Safety mechanisms
-* Safe state
-* Fault detection
-* Diagnostic coverage
-* MISRA-C
-* Defensive programming
-* Verification and testing
+- Embedded C
+- STM32 microcontrollers
+- ARM Cortex-M architecture
+- Bootloader development
+- Automotive communication fundamentals
+- CAN and UDS fundamentals
+- AUTOSAR Classic Application Layer
+- MATLAB / Simulink model-based development
+- Hardware abstraction and portability
+- Embedded software architecture
+- Automotive ECU concepts
 
 ---
 
-## 🛠️ Technical Skills
+# 🛠️ Technical Skills
 
-| Area                  | Technologies        |
-| --------------------- | ------------------- |
-| Languages             | C, C++              |
-| Microcontrollers      | STM32               |
-| Architecture          | ARM Cortex-M        |
-| Embedded              | Bare-Metal, Drivers |
-| RTOS                  | FreeRTOS            |
-| Communication         | UART, SPI, I2C, CAN |
-| Automotive            | CAN, UDS, AUTOSAR   |
-| Safety                | ISO 26262, MISRA-C  |
-| Debugging             | GDB, Debugger       |
-| Tools                 | Git, GitHub         |
-| Modeling / Simulation | MATLAB, Simulink    |
+## Programming
+
+| Technology | Level / Usage |
+|---|---|
+| C | Practical use in embedded projects |
+| Embedded C | Practical use with STM32 and generated AUTOSAR code |
+| C++ | Academic / basic practical use |
+| MATLAB | Practical use in engineering and Simulink projects |
+| Python | Academic and engineering scripting |
+| Git / GitHub | Used for project versioning and documentation |
 
 ---
 
-## 🔬 Engineering Approach
+## Embedded Systems
 
-For each important concept, I follow a practical engineering workflow:
+Practical experience with:
+
+- STM32F103
+- STM32F446
+- ARM Cortex-M fundamentals
+- GPIO
+- Timers
+- PWM
+- External interrupts
+- STM32 HAL
+- STM32CubeIDE
+- STM32CubeMX
+- Startup code fundamentals
+- Vector table
+- MSP / Stack Pointer
+- Reset Handler
+- VTOR relocation
+- Flash / SRAM memory organization
+- Firmware validation
+- Hardware abstraction
+
+Working knowledge of:
+
+- UART
+- SPI
+- I2C
+- DMA
+- Watchdog concepts
+- Interrupt handling
+- Memory-mapped peripherals
+
+---
+
+# 🚗 Automotive Embedded Systems
+
+## Practical / Project-Based
+
+- AUTOSAR Classic Application Software Component
+- AUTOSAR Runnable configuration
+- Timing Events
+- Sender/Receiver communication
+- P-Port configuration
+- ARXML generation
+- RTE data-access interfaces
+- Hardware-independent Application Layer
+- STM32 integration
+- CAN fundamentals
+- UDS fundamentals
+- Automotive bootloader concepts
+
+## Fundamentals Currently Studied
+
+- AUTOSAR BSW architecture
+- MCAL
+- ECU Abstraction
+- COM Stack
+- COM
+- PduR
+- CanIf
+- DCM
+- DEM
+- NvM
+- RTOS / FreeRTOS fundamentals
+- ISO 26262 fundamentals
+- ASPICE fundamentals
+- MISRA-C concepts
+
+These topics are listed as learning areas and are not presented as full production-level implementations.
+
+---
+
+# 🧠 ARM Cortex-M Knowledge
+
+Topics studied and applied during STM32 projects include:
+
+- CPU and core concepts
+- General-purpose registers
+- Program Counter
+- Link Register
+- Stack Pointer
+- MSP and PSP
+- Exception handling
+- NVIC fundamentals
+- SysTick fundamentals
+- Thread mode and Handler mode
+- Privileged and unprivileged execution
+- Fetch / Decode / Execute
+- Memory map
+- Flash and SRAM
+- Vector table
+- Startup code
+- Reset sequence
+- Stack initialization
+- VTOR
+
+---
+
+# 📂 Main Projects
+
+---
+
+## 01 — STM32F103 Custom Bootloader
+
+Custom bootloader developed for the **STM32F103C8T6 / ARM Cortex-M3**.
+
+### Implemented concepts
+
+- Bootloader and Application memory separation
+- Application located at a custom Flash offset
+- Reading the initial Main Stack Pointer from the application vector table
+- Reading the Application Reset Handler
+- MSP update before application jump
+- VTOR relocation
+- Jump from Bootloader to Application
+- Application address validation
+- Stack Pointer validation
+- Reset Handler validation
+
+### Memory architecture
 
 ```text
-Theory
-   ↓
-Implementation
-   ↓
-Testing
-   ↓
-Debugging
-   ↓
-Documentation
-   ↓
-Git Commit
-```
-
-The objective is not only to understand how a system works, but also to understand **why it works, how it fails, and how to verify its behavior**.
-
----
-
-## 🚗 Automotive ECU Project
-
-A complete automotive embedded project will progressively combine the skills developed throughout this portfolio.
-
-### Planned Architecture
-
-```text
-Sensor
-   ↓
-MCU
-   ↓
-Embedded Application
-   ↓
-MCU Driver
-   ↓
-CAN
-   ↓
-CAN Bus
-   ↓
-ECU
-   ↓
-Diagnostics
-```
-
-The project will progressively explore:
-
-* Embedded C
-* STM32
-* Drivers
-* Interrupts
-* RTOS
-* CAN
-* Diagnostics
-* Watchdog
-* State machines
-* Error handling
-* Automotive software architecture
-
----
-
-## 📂 Main Projects
-
-### Embedded C
-
-Fundamental and advanced C programming concepts applied to embedded software.
-
-**Status:** In progress
-
-### Bare-Metal STM32
-
-Low-level STM32 development and peripheral driver implementation.
-
-**Status:** Planned
-
-### Embedded RTOS
-
-Real-time software concepts and FreeRTOS-based applications.
-
-**Status:** Planned
-
-### Automotive ECU
-
-An automotive-oriented embedded project combining MCU programming, CAN communication, diagnostics and real-time software concepts.
-
-**Status:** Planned
-
----
-
-## 📈 Progress
-
-### Embedded C
-
-* [ ] C fundamentals
-* [ ] Pointers
-* [ ] Memory management
-* [ ] Bit manipulation
-* [ ] Structures / unions / enums
-* [ ] Function pointers
-* [ ] Embedded C patterns
-
-### ARM / STM32
-
-* [ ] ARM Cortex-M
-* [ ] Memory map
-* [ ] Registers
-* [ ] Startup code
-* [ ] Interrupts
-* [ ] GPIO
-* [ ] Timers
-* [ ] UART
-* [ ] SPI
-* [ ] I2C
-* [ ] ADC
-* [ ] PWM
-* [ ] DMA
-
-### RTOS
-
-* [ ] RTOS fundamentals
-* [ ] Tasks
-* [ ] Scheduling
-* [ ] Queues
-* [ ] Semaphores
-* [ ] Mutexes
-* [ ] Interrupt synchronization
-* [ ] FreeRTOS
-
-### Automotive
-
-* [ ] CAN
-* [ ] CAN driver
-* [ ] ECU architecture
-* [ ] UDS
-* [ ] Diagnostics
-* [ ] Bootloader
-* [ ] Watchdog
-* [ ] Fault handling
-
-### Automotive Architecture & Safety
-
-* [ ] AUTOSAR
-* [ ] RTE
-* [ ] BSW
-* [ ] COM Stack
-* [ ] DCM
-* [ ] DEM
-* [ ] ISO 26262
-* [ ] MISRA-C
-
----
-
-## 📚 Documentation
-
-Technical concepts, design decisions, experiments and lessons learned will be documented throughout the learning journey.
-
-```text
-docs/
-├── embedded-c.md
-├── arm-cortex-m.md
-├── rtos.md
-├── automotive.md
-├── autosar.md
-└── functional-safety.md
-```
-
----
-
-## 🔧 Development Principles
-
-The projects in this portfolio aim to progressively follow professional embedded software practices:
-
-* Clear module responsibilities
-* Explicit interfaces
-* Deterministic behavior
-* Defensive programming
-* Error handling
-* Resource ownership
-* Testable code
-* Debugging and traceability
-* Meaningful Git commits
-* Clear technical documentation
-
----
-
-## 🎓 Final Goal
-
-Build the knowledge and practical experience required to work as an **Embedded Software Engineer in the Automotive industry**.
-
-The focus is on understanding the complete path from:
-
-```text
-C Programming
-      ↓
-Embedded C
-      ↓
-ARM / MCU
-      ↓
-Bare-Metal
-      ↓
-Drivers
-      ↓
-RTOS
-      ↓
-CAN
-      ↓
-Automotive ECU
-      ↓
-Diagnostics
-      ↓
-AUTOSAR
-      ↓
-Functional Safety
-```
-
----
-
-## 📌 Continuous Learning
-
-This repository will evolve as new concepts are studied, implemented, tested and documented.
-
-**Learn → Build → Test → Debug → Document → Improve.**
-
-🚗⚡
+FLASH
+0x08000000
+     |
+     | Bootloader
+     |
+0x08004000
+     |
+     | Application
+     |
+0x08010000
