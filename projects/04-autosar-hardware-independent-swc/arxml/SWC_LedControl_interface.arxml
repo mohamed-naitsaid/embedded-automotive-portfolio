@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Auto generated XML Component Description for model SWC_LedControl
+Model version                : 1.3
+Simulink Coder version       : Simulink Coder 24.1 (R2024a) 19-Nov-2023
+XML source code generated on : Mon Oct 05 21:30:22 2026
+Model Checksum               : 3150775954 2844151572 2502479515 546095003
+-->
+<AUTOSAR xmlns="http://autosar.org/schema/r4.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://autosar.org/schema/r4.0 AUTOSAR_00051.xsd">
+    <AR-PACKAGES>
+        <AR-PACKAGE>
+            <SHORT-NAME>Interfaces</SHORT-NAME>
+            <ELEMENTS>
+                <SENDER-RECEIVER-INTERFACE UUID="65dd7665-dff4-54e6-84a3-3ed42f7c4a1e">
+                    <SHORT-NAME>LedCommand</SHORT-NAME>
+                    <IS-SERVICE>false</IS-SERVICE>
+                    <DATA-ELEMENTS>
+                        <VARIABLE-DATA-PROTOTYPE UUID="62a1611e-a984-5519-5891-6aca614d7651">
+                            <SHORT-NAME>LedCommand</SHORT-NAME>
+                            <CATEGORY>VALUE</CATEGORY>
+                            <SW-DATA-DEF-PROPS>
+                                <SW-DATA-DEF-PROPS-VARIANTS>
+                                    <SW-DATA-DEF-PROPS-CONDITIONAL>
+                                        <SW-CALIBRATION-ACCESS>READ-ONLY</SW-CALIBRATION-ACCESS>
+                                        <SW-IMPL-POLICY>STANDARD</SW-IMPL-POLICY>
+                                    </SW-DATA-DEF-PROPS-CONDITIONAL>
+                                </SW-DATA-DEF-PROPS-VARIANTS>
+                            </SW-DATA-DEF-PROPS>
+                            <TYPE-TREF DEST="IMPLEMENTATION-DATA-TYPE">/DataTypes/boolean</TYPE-TREF>
+                        </VARIABLE-DATA-PROTOTYPE>
+                    </DATA-ELEMENTS>
+                </SENDER-RECEIVER-INTERFACE>
+            </ELEMENTS>
+        </AR-PACKAGE>
+    </AR-PACKAGES>
+</AUTOSAR>

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Auto generated XML Component Description for model SWC_LedControl
+Model version                : 1.3
+Simulink Coder version       : Simulink Coder 24.1 (R2024a) 19-Nov-2023
+XML source code generated on : Mon Oct 05 21:30:22 2026
+Model Checksum               : 3150775954 2844151572 2502479515 546095003
+-->
+<AUTOSAR xmlns="http://autosar.org/schema/r4.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://autosar.org/schema/r4.0 AUTOSAR_00051.xsd">
+    <AR-PACKAGES>
+        <AR-PACKAGE>
+            <SHORT-NAME>Components</SHORT-NAME>
+            <ELEMENTS>
+                <APPLICATION-SW-COMPONENT-TYPE UUID="e853515c-016d-5cd6-467b-85a2c8e6486b">
+                    <SHORT-NAME>SWC_LedControl</SHORT-NAME>
+                    <PORTS>
+                        <P-PORT-PROTOTYPE UUID="cff0e81b-9f7b-5373-c1ef-9491fdcfdcb5">
+                            <SHORT-NAME>LedCommand</SHORT-NAME>
+                            <PROVIDED-COM-SPECS>
+                                <NONQUEUED-SENDER-COM-SPEC>
+                                    <DATA-ELEMENT-REF DEST="VARIABLE-DATA-PROTOTYPE">/Interfaces/LedCommand/LedCommand</DATA-ELEMENT-REF>
+                                    <HANDLE-OUT-OF-RANGE>NONE</HANDLE-OUT-OF-RANGE>
+                                    <USES-END-TO-END-PROTECTION>false</USES-END-TO-END-PROTECTION>
+                                    <INIT-VALUE>
+                                        <NUMERICAL-VALUE-SPECIFICATION>
+                                            <SHORT-LABEL>DefaultInitValue_boolean</SHORT-LABEL>
+                                            <VALUE>0</VALUE>
+                                        </NUMERICAL-VALUE-SPECIFICATION>
+                                    </INIT-VALUE>
+                                </NONQUEUED-SENDER-COM-SPEC>
+                            </PROVIDED-COM-SPECS>
+                            <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Interfaces/LedCommand</PROVIDED-INTERFACE-TREF>
+                        </P-PORT-PROTOTYPE>
+                    </PORTS>
+                    <INTERNAL-BEHAVIORS>
+                        <SWC-INTERNAL-BEHAVIOR UUID="67f2d1c2-ed24-598a-1dbf-895839222107">
+                            <SHORT-NAME>SWC_LedControl_IB</SHORT-NAME>
+                            <EVENTS>
+                                <TIMING-EVENT UUID="6a714b7f-72bc-58c6-d033-5e9afb0255c4">
+                                    <SHORT-NAME>Event_SWC_LedControl_Step</SHORT-NAME>
+                                    <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Components/SWC_LedControl/SWC_LedControl_IB/SWC_LedControl_Step</START-ON-EVENT-REF>
+                                    <PERIOD>0.5</PERIOD>
+                                </TIMING-EVENT>
+                            </EVENTS>
+                            <HANDLE-TERMINATION-AND-RESTART>NO-SUPPORT</HANDLE-TERMINATION-AND-RESTART>
+                            <RUNNABLES>
+                                <RUNNABLE-ENTITY UUID="6afc8d00-0875-59d9-f842-06e90cdf5bd8">
+                                    <SHORT-NAME>SWC_LedControl_Init</SHORT-NAME>
+                                    <MINIMUM-START-INTERVAL>0</MINIMUM-START-INTERVAL>
+                                    <CAN-BE-INVOKED-CONCURRENTLY>false</CAN-BE-INVOKED-CONCURRENTLY>
+                                    <SYMBOL>SWC_LedControl_Init</SYMBOL>
+                                </RUNNABLE-ENTITY>
+                                <RUNNABLE-ENTITY UUID="eb65a17a-2e14-5958-97c8-68c62d815512">
+                                    <SHORT-NAME>SWC_LedControl_Step</SHORT-NAME>
+                                    <MINIMUM-START-INTERVAL>0</MINIMUM-START-INTERVAL>
+                                    <CAN-BE-INVOKED-CONCURRENTLY>false</CAN-BE-INVOKED-CONCURRENTLY>
+                                    <DATA-WRITE-ACCESSS>
+                                        <VARIABLE-ACCESS UUID="5bc084ad-3ebf-5070-a450-22c5a2748fa6">
+                                            <SHORT-NAME>OUT_LedCommand_LedCommand</SHORT-NAME>
+                                            <ACCESSED-VARIABLE>
+                                                <AUTOSAR-VARIABLE-IREF>
+                                                    <PORT-PROTOTYPE-REF DEST="P-PORT-PROTOTYPE">/Components/SWC_LedControl/LedCommand</PORT-PROTOTYPE-REF>
+                                                    <TARGET-DATA-PROTOTYPE-REF DEST="VARIABLE-DATA-PROTOTYPE">/Interfaces/LedCommand/LedCommand</TARGET-DATA-PROTOTYPE-REF>
+                                                </AUTOSAR-VARIABLE-IREF>
+                                            </ACCESSED-VARIABLE>
+                                        </VARIABLE-ACCESS>
+                                    </DATA-WRITE-ACCESSS>
+                                    <SYMBOL>SWC_LedControl_Step</SYMBOL>
+                                </RUNNABLE-ENTITY>
+                            </RUNNABLES>
+                            <SUPPORTS-MULTIPLE-INSTANTIATION>false</SUPPORTS-MULTIPLE-INSTANTIATION>
+                        </SWC-INTERNAL-BEHAVIOR>
+                    </INTERNAL-BEHAVIORS>
+                </APPLICATION-SW-COMPONENT-TYPE>
+            </ELEMENTS>
+        </AR-PACKAGE>
+    </AR-PACKAGES>
+</AUTOSAR>

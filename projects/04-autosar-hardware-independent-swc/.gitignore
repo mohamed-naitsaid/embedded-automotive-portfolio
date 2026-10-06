@@ -1,0 +1,36 @@
+# MATLAB / Simulink
+slprj/
+*_autosar_rtw/
+*.slxc
+*.autosave
+
+# STM32 build outputs
+Debug/
+Release/
+*.o
+*.d
+*.su
+*.elf
+*.map
+*.list
+*.bin
+*.hex
+
+# STM32CubeIDE metadata
+.settings/
+.metadata/
+
+# Executables
+*.exe
+*.out
+autosar_led
+
+# Proteus temporary files
+*.pdsbak
+*.workspace
+
+# OS temporary files
+Thumbs.db
+.DS_Store
+*.tmp
+*~

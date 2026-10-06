@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Auto generated XML Component Description for model SWC_LedControl
+Model version                : 1.3
+Simulink Coder version       : Simulink Coder 24.1 (R2024a) 19-Nov-2023
+XML source code generated on : Mon Oct 05 21:30:22 2026
+Model Checksum               : 3150775954 2844151572 2502479515 546095003
+-->
+<AUTOSAR xmlns="http://autosar.org/schema/r4.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://autosar.org/schema/r4.0 AUTOSAR_00051.xsd">
+    <AR-PACKAGES>
+        <AR-PACKAGE>
+            <SHORT-NAME>Components</SHORT-NAME>
+            <ELEMENTS/>
+            <AR-PACKAGES>
+                <AR-PACKAGE>
+                    <SHORT-NAME>SwcImplementations</SHORT-NAME>
+                    <ELEMENTS>
+                        <SWC-IMPLEMENTATION UUID="37aa869b-15fb-52bb-01d5-93519582cb89">
+                            <SHORT-NAME>SWC_LedControl_Impl</SHORT-NAME>
+                            <CODE-DESCRIPTORS>
+                                <CODE>
+                                    <SHORT-NAME>Code</SHORT-NAME>
+                                    <ARTIFACT-DESCRIPTORS>
+                                        <AUTOSAR-ENGINEERING-OBJECT>
+                                            <SHORT-LABEL>SWC_LedControl_c</SHORT-LABEL>
+                                            <CATEGORY>SWSRC</CATEGORY>
+                                        </AUTOSAR-ENGINEERING-OBJECT>
+                                        <AUTOSAR-ENGINEERING-OBJECT>
+                                            <SHORT-LABEL>SWC_LedControl_h</SHORT-LABEL>
+                                            <CATEGORY>SWHDR</CATEGORY>
+                                        </AUTOSAR-ENGINEERING-OBJECT>
+                                        <AUTOSAR-ENGINEERING-OBJECT>
+                                            <SHORT-LABEL>SWC_LedControl_private_h</SHORT-LABEL>
+                                            <CATEGORY>SWHDR</CATEGORY>
+                                        </AUTOSAR-ENGINEERING-OBJECT>
+                                        <AUTOSAR-ENGINEERING-OBJECT>
+                                            <SHORT-LABEL>SWC_LedControl_types_h</SHORT-LABEL>
+                                            <CATEGORY>SWHDR</CATEGORY>
+                                        </AUTOSAR-ENGINEERING-OBJECT>
+                                    </ARTIFACT-DESCRIPTORS>
+                                </CODE>
+                            </CODE-DESCRIPTORS>
+                            <PROGRAMMING-LANGUAGE>C</PROGRAMMING-LANGUAGE>
+                            <RESOURCE-CONSUMPTION>
+                                <SHORT-NAME>RsrcCons_SWC_LedControl</SHORT-NAME>
+                            </RESOURCE-CONSUMPTION>
+                            <SW-VERSION>1.3.1</SW-VERSION>
+                            <USED-CODE-GENERATOR>Embedded Coder 24.1 (R2024a) 19-Nov-2023</USED-CODE-GENERATOR>
+                            <VENDOR-ID>0</VENDOR-ID>
+                            <BEHAVIOR-REF DEST="SWC-INTERNAL-BEHAVIOR">/Components/SWC_LedControl/SWC_LedControl_IB</BEHAVIOR-REF>
+                        </SWC-IMPLEMENTATION>
+                    </ELEMENTS>
+                </AR-PACKAGE>
+            </AR-PACKAGES>
+        </AR-PACKAGE>
+    </AR-PACKAGES>
+</AUTOSAR>
