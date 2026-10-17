@@ -300,3 +300,7 @@ The successful demonstrations are not equivalent to a production-ready automotiv
 ---
 
 **Validated outcome:** A PC tool successfully updated an STM32F103 application's binary through CAN, and a second update visibly changed LED behavior from the original pattern to a 3-second toggle interval. The new behavior persisted after hardware RESET, with the bootloader unchanged.
+
+## Previous versions (V1-V5)
+
+Detailed documentation of earlier versions is available in [Version history](docs/version-history.md).
