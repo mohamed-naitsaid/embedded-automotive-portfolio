@@ -300,19 +300,40 @@ projects/01-stm32-custom-bootloader/
 
 Other files and earlier simulation/testing scripts may also be present. The tree highlights files relevant to the real-hardware CAN/UDS demonstration. Compiled temporary files, personal full-Flash backups, and machine-local paths do not belong in the public repository.
 
-## 9. Evidence to add last
 
-**Screenshots, photos and video are intentionally deferred to the final documentation stage.** Only link to evidence when the real file has been added to the repository. Suggested files under `docs/evidence/`:
+## 9. Hardware validation evidence
 
-| Proposed file | What it should demonstrate |
-|---|---|
-| `01-hardware-wiring.jpg` | Real STM32 Blue Pill, CAN transceiver, USB-CAN adapter, wiring and PA8 LED |
-| `02-can-ping-pcan.png` | Custom CAN `0x600` PING → `0x650` ACK |
-| `03-uds-negative-responses.png` | Tested UDS refusal responses, e.g. `0x7F 34 31` |
-| `04-uds-v6-2-transfer.png` | Python session/key/erase, **924/924 block ACK**, CRC32 and ECUReset |
-| `05-pa8-v6-2-demo.mp4` | PA8 LED toggle every 1 second after programming and power cycle |
+The following photographs and screenshots document the real STM32F103C8T6 CAN/UDS firmware update demonstration. All evidence files are available in the [Hardware Evidence Gallery](docs/evidence/README.md).
 
-These are **suggested names**, not a claim that the media have already been uploaded.
+### Real CAN/UDS test bench
+
+STM32F103C8T6 Blue Pill, CAN transceiver, USB-CAN adapter and physical test setup.
+
+![Real CAN/UDS test bench](docs/evidence/09-real-can-uds-bench-setup.png)
+
+### Successful UDS firmware update — V6.2
+
+The Python flashing tool completed 924/924 acknowledged TransferData blocks, verified CRC32 `0x851DC03B`, and received a positive ECUReset response.
+
+![UDS transfer validation](docs/evidence/05-uds-v6-2-flash-924-acks-crc32.png)
+
+### Application V6.2 — External LED on PA8
+
+Real STM32 Blue Pill setup with external LED and ST-Link.
+
+![STM32 external LED setup](docs/evidence/08-real-bluepill-external-led-stlink.png)
+
+### PA8 firmware configuration
+
+STM32CubeIDE application source and STM32CubeMX GPIO configuration.
+
+![PA8 application source](docs/evidence/06-pa8-application-source-stm32cubeide.png)
+
+![PA8 GPIO configuration](docs/evidence/07-pa8-gpio-configuration-stm32cubemx.png)
+
+**Validation note:** The external LED was observed toggling every second after the UDS update and after a complete power cycle. A static photograph does not independently establish the toggle period.
+
+For CAN PING, UDS session and SecurityAccess screenshots, see the [complete evidence gallery](docs/evidence/README.md).
 
 ## 10. Limitations and engineering next steps
 
