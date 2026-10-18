@@ -2,7 +2,7 @@
 
 Custom bootloader developed for the **STM32F103C8T6 (ARM Cortex-M3)**.
 
-The project is built incrementally, starting from a basic Bootloader-to-Application jump and progressively adding firmware validation, metadata, CRC32 integrity checking, UART firmware update, CAN-oriented firmware update, and later UDS diagnostics.
+The project is built incrementally, starting from a basic Bootloader-to-Application jump and progressively adding firmware validation, metadata, CRC32 integrity checking, UART firmware update, CAN-oriented firmware update, and CAN/UDS firmware reprogramming validated on physical hardware.
 
 ---
 
@@ -20,7 +20,7 @@ The project is built incrementally, starting from a basic Bootloader-to-Applicat
 - Receive and program firmware through UART
 - Implement a CAN-oriented firmware update protocol
 - Handle sequence numbers, ACK/NACK and retransmissions
-- Prepare the architecture for UDS-based automotive reprogramming
+- Implement and validate a custom CAN/UDS firmware-update workflow on real STM32 hardware
 
 ---
 
@@ -33,7 +33,7 @@ The project is built incrementally, starting from a basic Bootloader-to-Applicat
 | V3 | Firmware Header + CRC32 Integrity | ✅ Completed |
 | V4 | UART Firmware Update | ✅ Completed |
 | V5 | CAN Firmware Update | ✅ Completed |
-| V6 | Automotive Diagnostics / UDS | 🔜 Planned |
+| V6 | CAN/UDS Firmware Update — V6.2 | ✅ Completed — Hardware Validated |
 
 ---
 
@@ -821,7 +821,7 @@ Boot window
   |
   +--> UART update request?
   |
-  +--> CAN update request?
+  +--> CAN / UDS update request?
   |
   +--> No update request
            |
@@ -846,12 +846,14 @@ Update modes:
 
 ```text
 UART path -> V4 protocol
-CAN path  -> V5 protocol
+CAN path  -> V5 custom protocol / V6 UDS subset
 ```
 
 ---
 
-# Repository Structure
+# Repository Structure (historical snapshot)
+
+This directory tree reflects an earlier development stage. Refer to the [main project README](../README.md) for the current V6.2 layout, including `tools/`, `firmware/`, and `docs/evidence/`.
 
 ```text
 embedded-automotive-portfolio/
@@ -905,6 +907,8 @@ embedded-automotive-portfolio/
 - PySerial
 - IntelHex
 - Python `zlib`
+- `python-can` and `uv` (hardware CAN/UDS tooling)
+- PCAN-View and STM32CubeProgrammer (hardware verification)
 - Proteus 9 Professional
 - COMPIM
 - Git
@@ -948,6 +952,9 @@ embedded-automotive-portfolio/
 - Intel HEX Manipulation
 - Bootloader/Application Separation
 - Simulation vs Hardware Abstraction
+- UDS programming session / firmware download
+- UDS positive and negative responses
+- CAN/UDS hardware validation
 
 ---
 
@@ -960,7 +967,7 @@ embedded-automotive-portfolio/
 | V3 | Firmware Header + CRC32 Integrity Verification | Completed |
 | V4 | UART Firmware Update | Completed |
 | V5 | CAN Firmware Update | Completed |
-| V6 | Automotive Diagnostics / UDS | Planned |
+| V6 | CAN/UDS Firmware Update — V6.2 | Completed — Hardware Validated |
 
 Git tags:
 
@@ -976,34 +983,77 @@ v5.0-can-firmware-update
 
 ---
 
-# 🔜 V6 — Automotive Diagnostics / UDS
+# ✅ V6 — CAN/UDS Firmware Update (Hardware Validated)
 
-The next version will extend the Bootloader toward an automotive diagnostic reprogramming architecture.
+V6 extends the STM32F103C8T6 Custom Bootloader with an educational subset of **Unified Diagnostic Services (UDS)** over classical CAN at **500 kbit/s**. The final V6.2 update was tested on the physical microcontroller, using a Python sender and a USB-CAN interface.
 
-Planned services:
+## Implemented UDS services
 
-```text
-0x10 - Diagnostic Session Control
-0x11 - ECU Reset
-0x27 - Security Access
-0x34 - Request Download
-0x36 - Transfer Data
-0x37 - Request Transfer Exit
-```
+| SID | Service | Purpose |
+|---|---|---|
+| `0x10` | DiagnosticSessionControl | Enter the programming session |
+| `0x11` | ECUReset | Reboot the target following a completed update |
+| `0x27` | SecurityAccess | Demonstration Seed/Key access |
+| `0x34` | RequestDownload | Authorize the firmware transfer and erase application Flash |
+| `0x36` | TransferData | Receive numbered firmware data blocks |
+| `0x37` | RequestTransferExit | Verify image CRC32 and finalize the firmware header |
 
-Planned concepts:
+This implementation uses CAN request ID **`0x7E0`** and response ID **`0x7E8`**. The earlier proprietary CAN update workflow used **`0x600`/`0x601`/`0x602`** and **`0x650`**; these are different protocols.
 
-- UDS over CAN
-- Diagnostic Session Control
-- ECU Reset
-- Security Access
-- Request Download
-- Transfer Data
-- Request Transfer Exit
-- Firmware validation
-- Automotive ECU reprogramming workflow
+## V6.1 — Onboard LED firmware
 
-The goal is to reuse the Flash, CRC32 and firmware-validation foundation developed in V1–V5 and expose the update flow through UDS services.
+- Application size: **4,624 bytes**.
+- Application CRC32: **`0x8513D353`**.
+- Application output: onboard **PC13** LED, toggled every **3 seconds**.
+- UDS reinstallation on real hardware: **925/925 TransferData blocks acknowledged**.
+
+## V6.2 — Firmware upgrade to external PA8 LED
+
+| Parameter | Verified result |
+|---|---|
+| Target | STM32F103C8T6 Blue Pill |
+| Bus | Classical CAN, 500 kbit/s |
+| Application image | `firmware/Application_V6_2_PA8.bin` |
+| Firmware size | **4,620 bytes** |
+| Firmware CRC32 | **`0x851DC03B`** |
+| Request / response CAN IDs | `0x7E0` / `0x7E8` |
+| TransferData | **924/924 blocks acknowledged** |
+| RequestTransferExit | Positive response after CRC32 verification |
+| ECUReset | Positive response |
+| Functional result | External LED on **PA8**, toggling every **1 second** |
+| Persistence | Correct operation after hardware RESET and full power-off/power-on |
+| Bootloader | Existing bootloader remained in place; update targeted application area |
+
+A one-second **toggle interval** means the GPIO changes state every second; a complete LED ON/OFF cycle lasts approximately two seconds.
+
+## Flash memory layout for V6
+
+| Region | Start | End (inclusive) | Size |
+|---|---|---|---|
+| Custom bootloader | `0x08000000` | `0x08003FFF` | 16 KiB |
+| Firmware header reservation | `0x08004000` | `0x080043FF` | 1 KiB |
+| Application | `0x08004400` | `0x0800FFFF` | 47 KiB |
+
+The firmware header occupies the first **16 bytes** at `0x08004000`, while the remainder of its page is reserved. V6.2 uses `0x08004400` for its vector table and an initial MSP of `0x20005000`.
+
+## Hardware validation evidence
+
+The following evidence is stored in the repository:
+
+- [Hardware evidence gallery](evidence/README.md) — nine screenshots and real photographs.
+- [Successful V6.2 firmware transfer: 924 ACKs and CRC32](evidence/05-uds-v6-2-flash-924-acks-crc32.png).
+- [STM32 Blue Pill and CAN/UDS test bench](evidence/09-real-can-uds-bench-setup.png).
+- [External LED and ST-Link hardware setup](evidence/08-real-bluepill-external-led-stlink.png).
+- [PA8 application source in STM32CubeIDE](evidence/06-pa8-application-source-stm32cubeide.png).
+- [PA8 GPIO configuration in STM32CubeMX](evidence/07-pa8-gpio-configuration-stm32cubemx.png).
+
+The external PA8 LED operation and persistence after power cycling were **observed during physical testing**. The still photographs alone do not independently establish the one-second toggle interval; a short video would strengthen that specific evidence.
+
+## Known limits and future work
+
+This is a **custom single-frame UDS subset**, not a complete ISO-TP/UDS stack. The XOR Seed/Key mechanism is a demonstration, not secure authentication. No firmware signatures, secure boot, A/B rollback, or recovery from a power cut **during** Flash erasure/programming have been demonstrated. These limitations must not be confused with the successful power-cycle test **after** a completed update.
+
+For the current complete implementation and instructions, see the [project README](../README.md).
 
 ---
 
@@ -1025,7 +1075,7 @@ UART Firmware Update
 CAN Firmware Update
       |
       v
-UDS Diagnostic Bootloader
+UDS Diagnostic Bootloader — V6.2 hardware validated
 ```
 
 ---
