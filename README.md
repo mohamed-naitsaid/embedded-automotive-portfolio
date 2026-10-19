@@ -1,30 +1,44 @@
 # Embedded Automotive Portfolio 🚗⚡
 
-Welcome to my Embedded Software & Automotive Systems portfolio.
+Welcome to my **Embedded Software & Automotive Systems** portfolio.
 
-I am an engineering student in **Automobile & Digital Solutions**, with a strong interest in **embedded software, automotive ECUs, ARM microcontrollers and AUTOSAR Classic**.
+I am an engineering student in **Automobile & Digital Solutions**, focused on **embedded automotive software, ARM Cortex-M, STM32, CAN/UDS, bootloaders and AUTOSAR Classic**.
 
-This repository documents my practical learning journey through embedded projects, simulations, code generation, debugging and automotive software concepts.
+This repository documents practical projects developed through:
 
-The objective is not to present every technology as mastered, but to progressively build and demonstrate practical skills through working projects.
+- Embedded C programming
+- Model-Based Development
+- MCU integration
+- Automotive communication
+- Firmware update mechanisms
+- Hardware abstraction
+- Debugging
+- Simulation
+- Physical hardware validation
+- Technical documentation
+
+The objective is to demonstrate practical engineering skills through working implementations rather than simply listing technologies.
 
 ---
 
-## 🎯 Main Focus
+# 🎯 Main Focus
 
-My current technical focus is:
+My current technical focus includes:
 
 - Embedded C
+- ARM Cortex-M
 - STM32 microcontrollers
-- ARM Cortex-M architecture
-- Bootloader development
-- Automotive communication fundamentals
-- CAN and UDS fundamentals
+- Automotive bootloaders
+- Flash memory programming
+- CAN communication
+- UDS diagnostics
 - AUTOSAR Classic Application Layer
-- MATLAB / Simulink model-based development
-- Hardware abstraction and portability
-- Embedded software architecture
-- Automotive ECU concepts
+- MATLAB / Simulink
+- ARXML and RTE interfaces
+- Hardware abstraction
+- Embedded software portability
+- Automotive ECU architecture
+- Software testing and debugging
 
 ---
 
@@ -32,14 +46,13 @@ My current technical focus is:
 
 ## Programming
 
-| Technology | Level / Usage |
+| Area | Technologies |
 |---|---|
-| C | Practical use in embedded projects |
-| Embedded C | Practical use with STM32 and generated AUTOSAR code |
-| C++ | Academic / basic practical use |
-| MATLAB | Practical use in engineering and Simulink projects |
-| Python | Academic and engineering scripting |
-| Git / GitHub | Used for project versioning and documentation |
+| Embedded Programming | C, Embedded C |
+| Programming | C++, Python |
+| Model-Based Development | MATLAB, Simulink |
+| Scripting / Test Tools | Python, `python-can` |
+| Version Control | Git, GitHub |
 
 ---
 
@@ -47,9 +60,9 @@ My current technical focus is:
 
 Practical experience with:
 
-- STM32F103
-- STM32F446
-- ARM Cortex-M fundamentals
+- STM32F103C8T6
+- STM32F446RE
+- ARM Cortex-M3 / Cortex-M4 fundamentals
 - GPIO
 - Timers
 - PWM
@@ -57,24 +70,33 @@ Practical experience with:
 - STM32 HAL
 - STM32CubeIDE
 - STM32CubeMX
-- Startup code fundamentals
-- Vector table
-- MSP / Stack Pointer
-- Reset Handler
-- VTOR relocation
-- Flash / SRAM memory organization
-- Firmware validation
+- ST-Link
+- Flash memory organization
+- Firmware programming
 - Hardware abstraction
+- Embedded debugging
 
-Working knowledge of:
+ARM / MCU concepts studied and applied:
 
-- UART
-- SPI
-- I2C
-- DMA
-- Watchdog concepts
-- Interrupt handling
-- Memory-mapped peripherals
+- Memory map
+- Flash / SRAM
+- Vector table
+- Startup sequence
+- Reset Handler
+- Main Stack Pointer — MSP
+- Process Stack Pointer — PSP
+- VTOR relocation
+- Exception handling
+- NVIC fundamentals
+- SysTick fundamentals
+- Linker scripts
+- ELF / BIN / MAP files
+- `.text`
+- `.rodata`
+- `.data`
+- `.bss`
+- Stack and heap
+- `static`, `const`, `volatile`
 
 ---
 
@@ -82,24 +104,33 @@ Working knowledge of:
 
 ## Practical / Project-Based
 
-- AUTOSAR Classic Application Software Component
-- AUTOSAR Runnable configuration
-- Timing Events
+- Custom STM32 bootloader
+- Firmware/Application memory separation
+- Application jump
+- Vector table relocation
+- Flash erase and programming
+- Firmware header
+- CRC32 verification
+- Classical CAN communication
+- CAN-based firmware transfer
+- UDS-based firmware update
+- UDS services and negative responses
+- AUTOSAR Application SWC
+- Runnable and Timing Event
 - Sender/Receiver communication
-- P-Port configuration
 - ARXML generation
-- RTE data-access interfaces
+- RTE data-access interface
 - Hardware-independent Application Layer
-- STM32 integration
-- CAN fundamentals
-- UDS fundamentals
-- Automotive bootloader concepts
+- STM32 / Raspberry Pi portability
 
-## Fundamentals Currently Studied
+---
 
-- AUTOSAR BSW architecture
+## Currently Developing / Studying
+
+- Full AUTOSAR Classic BSW architecture
 - MCAL
 - ECU Abstraction
+- IoHwAb
 - COM Stack
 - COM
 - PduR
@@ -107,38 +138,13 @@ Working knowledge of:
 - DCM
 - DEM
 - NvM
-- RTOS / FreeRTOS fundamentals
+- AUTOSAR OS
+- RTOS / FreeRTOS
 - ISO 26262 fundamentals
 - ASPICE fundamentals
 - MISRA-C concepts
 
-These topics are listed as learning areas and are not presented as full production-level implementations.
-
----
-
-# 🧠 ARM Cortex-M Knowledge
-
-Topics studied and applied during STM32 projects include:
-
-- CPU and core concepts
-- General-purpose registers
-- Program Counter
-- Link Register
-- Stack Pointer
-- MSP and PSP
-- Exception handling
-- NVIC fundamentals
-- SysTick fundamentals
-- Thread mode and Handler mode
-- Privileged and unprivileged execution
-- Fetch / Decode / Execute
-- Memory map
-- Flash and SRAM
-- Vector table
-- Startup code
-- Reset sequence
-- Stack initialization
-- VTOR
+> These topics are listed as learning areas and are not presented as complete production-level implementations unless demonstrated by a project.
 
 ---
 
@@ -146,33 +152,596 @@ Topics studied and applied during STM32 projects include:
 
 ---
 
-## 01 — STM32F103 Custom Bootloader
+# 01 — STM32F103 Custom Bootloader — CAN & UDS Firmware Update
 
-Custom bootloader developed for the **STM32F103C8T6 / ARM Cortex-M3**.
+Hardware-validated custom bootloader developed for the **STM32F103C8T6 / ARM Cortex-M3**.
 
-### Implemented concepts
+[View Project](projects/01-stm32-custom-bootloader)
 
-- Bootloader and Application memory separation
-- Application located at a custom Flash offset
-- Reading the initial Main Stack Pointer from the application vector table
-- Reading the Application Reset Handler
-- MSP update before application jump
-- VTOR relocation
-- Jump from Bootloader to Application
-- Application address validation
-- Stack Pointer validation
+## Project Highlights
+
+The project progressively evolved from a basic Bootloader → Application jump into a physical **CAN/UDS firmware update demonstrator**.
+
+Implemented concepts include:
+
+- Bootloader / Application Flash separation
+- Custom linker regions
+- Application vector table relocation
+- MSP validation and loading
 - Reset Handler validation
+- `SCB->VTOR` relocation
+- Flash erase and programming
+- Firmware metadata header
+- CRC32 firmware verification
+- Classical CAN at **500 kbit/s**
+- CAN firmware transfer
+- Per-block acknowledgements
+- UDS programming workflow
+- Physical firmware update validation
 
-### Memory architecture
+### UDS Services Implemented
+
+- `0x10` — DiagnosticSessionControl
+- `0x11` — ECUReset
+- `0x27` — SecurityAccess
+- `0x34` — RequestDownload
+- `0x36` — TransferData
+- `0x37` — RequestTransferExit
+
+The implementation is an educational **custom single-frame UDS subset over Classical CAN** and does not claim to implement a complete ISO-TP / production ISO 14229 stack.
+
+---
+
+## Memory Architecture
 
 ```text
-FLASH
+STM32F103 Flash
 0x08000000
      |
-     | Bootloader
+     | Custom Bootloader
+     | 16 KiB
      |
 0x08004000
      |
-     | Application
+     | Firmware Header Area
+     |
+0x08004400
+     |
+     | Application Firmware
      |
 0x08010000
+```
+
+---
+
+## Hardware Architecture
+
+```text
+Windows PC
+    |
+    | Python + python-can
+    v
+USB-CAN Interface
+    |
+    | Classical CAN
+    | 500 kbit/s
+    v
+CAN Transceiver
+    |
+    | PA11 RX
+    | PA12 TX
+    v
+STM32F103C8T6
+    |
+    +--> Custom Bootloader
+    |
+    +--> Firmware Header
+    |
+    +--> Application
+```
+
+---
+
+## Hardware-Validated Firmware Update
+
+A complete UDS firmware update was validated on physical hardware.
+
+The bootloader received a new application through CAN and programmed it into internal Flash.
+
+### Before update
+
+```text
+Application V6.1
+PC13 LED
+Toggle period: 3 s
+```
+
+### After UDS update
+
+```text
+Application V6.2
+PA8 external LED
+Toggle period: 1 s
+```
+
+The transfer successfully completed:
+
+```text
+924 / 924 TransferData blocks acknowledged
+CRC32 accepted
+ECUReset positive response
+New application executed
+Power-cycle persistence validated
+```
+
+The application behavior changed without reflashing the bootloader through ST-Link.
+
+**Status:** ✅ Hardware validated
+
+---
+
+## Technologies
+
+- Embedded C
+- STM32F103C8T6
+- ARM Cortex-M3
+- STM32 HAL
+- STM32CubeIDE
+- STM32CubeProgrammer
+- ST-Link V2
+- Classical CAN
+- UDS
+- Python
+- `python-can`
+- CANable / USB-CAN
+- CRC32
+- Git / GitHub
+
+---
+
+# 02 — AUTOSAR Classic Hardware-Independent SWC
+
+AUTOSAR Classic demonstrator focused on **Application Layer portability and hardware-independent software design**.
+
+[View Project](projects/02-autosar-hardware-independent-swc)
+
+## Project Objective
+
+The project demonstrates that the same generated AUTOSAR Application Software Component can execute on different hardware platforms without changing its application logic.
+
+The AUTOSAR SWC was developed using:
+
+- MATLAB R2024a
+- Simulink
+- AUTOSAR Blockset
+
+The model generates:
+
+- Embedded C code
+- Component ARXML
+- Interface ARXML
+- Datatype ARXML
+- Implementation ARXML
+
+---
+
+## AUTOSAR Software Component
+
+```text
+Component      : SWC_LedControl
+Type           : Application SWC
+
+Runnable       : SWC_LedControl_Step
+Init Runnable  : SWC_LedControl_Init
+
+Timing Event   : 500 ms
+
+P-Port         : LedCommand
+Data Element   : LedCommand
+
+Communication  : Sender / Receiver
+Access Mode    : ImplicitSend
+```
+
+The generated SWC communicates through:
+
+```c
+Rte_IWrite_SWC_LedControl_Step_LedCommand_LedCommand(...);
+```
+
+---
+
+## Hardware-Independent Architecture
+
+```text
+                    SAME APPLICATION SWC
+                       SWC_LedControl
+                             |
+                        Rte_IWrite()
+                             |
+                        RTE Adapter
+                             |
+                       Led_Hw_Write()
+                        /          \
+                       /            \
+                      v              v
+                STM32F103        Raspberry Pi 5
+                STM32 HAL          libgpiod
+                   |                  |
+                  PC13              GPIO17
+                   |                  |
+                 LED ✅              LED ✅
+```
+
+The following application code remains unchanged:
+
+```text
+SWC_LedControl.c
+```
+
+Only the target-specific hardware layer changes:
+
+```text
+STM32F103
+└── Led_Hw_STM32.c
+
+Raspberry Pi 5
+└── Led_Hw_RaspberryPi.c
+```
+
+---
+
+## Validation
+
+| Target | Status |
+|---|---|
+| PC Console | ✅ Validated |
+| STM32F103 / Proteus | ✅ Validated |
+| STM32F103 Physical Hardware | ✅ Validated |
+| Raspberry Pi 5 / ARM64 | ✅ Validated |
+| Raspberry Pi 5 / GPIO17 | ✅ Physical validation |
+| Same Application SWC across targets | ✅ Validated |
+
+---
+
+## STM32F103 Physical Validation
+
+```text
+SWC_LedControl
+      ↓
+Rte_IWrite()
+      ↓
+RTE Adapter
+      ↓
+Led_Hw_STM32
+      ↓
+STM32 HAL
+      ↓
+PC13
+      ↓
+LED
+```
+
+The application was programmed and executed on a physical **STM32F103C8T6 Blue Pill**.
+
+---
+
+## Raspberry Pi 5 Physical Validation
+
+The same generated Application SWC was compiled as a native:
+
+```text
+ELF 64-bit ARM aarch64
+```
+
+on Raspberry Pi OS 64-bit.
+
+Runtime architecture:
+
+```text
+SWC_LedControl
+      ↓
+Rte_IWrite()
+      ↓
+RTE Adapter
+      ↓
+Led_Hw_RaspberryPi
+      ↓
+libgpiod
+      ↓
+GPIO17
+      ↓
+External LED
+```
+
+Physical GPIO17 blinking was successfully validated.
+
+**Status:** ✅ Completed and physically validated on both hardware platforms.
+
+---
+
+## Technologies
+
+- AUTOSAR Classic
+- MATLAB R2024a
+- Simulink
+- AUTOSAR Blockset
+- Embedded C
+- ARXML
+- RTE interfaces
+- STM32F103C8T6
+- STM32 HAL
+- STM32CubeIDE
+- Proteus
+- Raspberry Pi 5
+- Linux
+- GCC
+- `libgpiod`
+- Git / GitHub
+
+---
+
+# 🔌 Automotive Communication
+
+## CAN
+
+Practical and theoretical work includes:
+
+- Classical CAN
+- Standard 11-bit identifiers
+- CAN frame structure
+- Arbitration
+- DLC / Data Field
+- CRC
+- ACK
+- Bit stuffing
+- CAN errors
+- CAN transceiver integration
+- MCU CAN peripheral
+- USB-CAN interface
+- CAN firmware transfer
+
+A physical CAN bus has been used for the STM32 bootloader project.
+
+---
+
+## UDS
+
+Practical implementation currently includes:
+
+```text
+DiagnosticSessionControl
+ECUReset
+SecurityAccess
+RequestDownload
+TransferData
+RequestTransferExit
+```
+
+The bootloader project also implements positive and negative responses for several programming-state and parameter errors.
+
+The current implementation remains an educational subset and does not claim full ISO 14229 / ISO-TP compliance.
+
+---
+
+# 🧪 Model-Based Development & Simulation
+
+Tools used in projects and coursework include:
+
+- MATLAB
+- Simulink
+- Stateflow
+- AUTOSAR Blockset
+- Proteus
+- Webots
+
+Areas explored include:
+
+- Automotive control logic
+- EV modeling
+- State-based systems
+- ABS concepts
+- Vehicle dynamics
+- AUTOSAR SWC modeling
+- Code generation
+- MIL / SIL concepts
+
+---
+
+# 🔧 Development Tools
+
+| Category | Tools |
+|---|---|
+| MCU Development | STM32CubeIDE, STM32CubeMX |
+| Programming / Flashing | STM32CubeProgrammer, ST-Link |
+| Model-Based Development | MATLAB, Simulink, AUTOSAR Blockset |
+| Automotive Communication | CANable, PCAN-View, `python-can` |
+| Simulation | Proteus, Webots |
+| Linux | Raspberry Pi OS, GCC, Make |
+| Version Control | Git, GitHub |
+| Editors | VS Code |
+| System Modeling | Cameo / SysML |
+| Mechanical CAD | CATIA V5 |
+
+---
+
+# 📈 Demonstrated Progress
+
+## Embedded C / ARM
+
+- [x] Embedded C fundamentals
+- [x] Bit manipulation
+- [x] Pointer fundamentals
+- [x] Structures / enums
+- [x] `static`, `const`, `volatile`
+- [x] Flash / SRAM understanding
+- [x] `.text`, `.rodata`, `.data`, `.bss`
+- [x] Stack fundamentals
+- [x] Linker script fundamentals
+- [x] ELF / BIN / MAP understanding
+- [x] ARM Cortex-M startup fundamentals
+- [x] MSP
+- [x] Reset Handler
+- [x] Vector Table
+- [x] VTOR relocation
+
+---
+
+## STM32
+
+- [x] STM32F103
+- [x] STM32 HAL
+- [x] GPIO
+- [x] Timers / PWM coursework
+- [x] External interrupts
+- [x] Flash programming
+- [x] Bootloader → Application jump
+- [x] Firmware validation
+- [x] CAN peripheral integration
+- [x] Physical hardware testing
+
+---
+
+## Automotive Communication
+
+- [x] CAN fundamentals
+- [x] CAN frame structure
+- [x] Arbitration
+- [x] Bit stuffing concepts
+- [x] Physical CAN communication
+- [x] CAN-based firmware transfer
+- [x] UDS fundamentals
+- [x] UDS programming workflow
+- [x] Physical UDS firmware update
+- [ ] Complete ISO-TP implementation
+- [ ] Complete ISO 14229 diagnostic stack
+
+---
+
+## AUTOSAR Classic
+
+- [x] Layered architecture fundamentals
+- [x] Application Software Component
+- [x] Runnable Entity
+- [x] Timing Event
+- [x] Sender/Receiver Interface
+- [x] P-Port
+- [x] ARXML generation
+- [x] RTE data-access interface
+- [x] Simulink AUTOSAR code generation
+- [x] Hardware-independent SWC
+- [x] STM32 physical integration
+- [x] Raspberry Pi 5 physical integration
+- [ ] Production RTE configuration
+- [ ] AUTOSAR OS
+- [ ] Complete BSW configuration
+- [ ] COM Stack implementation
+- [ ] DCM / DEM implementation
+- [ ] NvM implementation
+- [ ] MCAL configuration
+
+---
+
+## Real-Time / Software Quality
+
+- [x] RTOS scheduling fundamentals
+- [x] Task / priority concepts
+- [x] Queue / semaphore / mutex concepts
+- [x] ASPICE fundamentals
+- [x] ISO 26262 fundamentals
+- [x] MISRA-C concepts
+- [ ] Complete FreeRTOS project
+- [ ] Complete ASPICE project workflow
+- [ ] MISRA-C compliance project
+
+---
+
+# 🔬 Engineering Approach
+
+For technical projects I follow a progressive engineering workflow:
+
+```text
+Requirements / Objective
+          ↓
+Architecture
+          ↓
+Design
+          ↓
+Implementation
+          ↓
+Build
+          ↓
+Test
+          ↓
+Debug
+          ↓
+Hardware Validation
+          ↓
+Documentation
+          ↓
+Git Version Control
+```
+
+The objective is not only to make a system work, but also to understand:
+
+- how the software is organized,
+- how it interacts with the hardware,
+- how memory is used,
+- how communication protocols operate,
+- how failures are detected,
+- how firmware can be updated,
+- how software can remain portable,
+- and how the implementation can be tested and documented.
+
+---
+
+# 🎯 Career Direction
+
+My objective is to develop toward an:
+
+**Embedded Software Engineer — Automotive**
+
+with particular interest in:
+
+- Embedded automotive software
+- ECU development
+- Bootloaders
+- CAN communication
+- UDS diagnostics
+- AUTOSAR Classic
+- Model-Based Development
+- Test & Validation
+- Automotive software architecture
+- Embedded system integration
+
+---
+
+# 📌 Repository Philosophy
+
+This repository is intentionally progressive.
+
+A technology is presented as a practical skill when it has been implemented, tested or demonstrated through a project.
+
+Topics still under development are explicitly identified as learning areas.
+
+```text
+Learn
+  ↓
+Understand
+  ↓
+Design
+  ↓
+Build
+  ↓
+Test
+  ↓
+Debug
+  ↓
+Validate on Hardware
+  ↓
+Document
+  ↓
+Improve
+```
+
+**Embedded Software • Automotive Systems • Build → Test → Validate 🚗⚡**
